@@ -2,7 +2,7 @@
 
 The Azure IoT C SDK and accompanying libraries enable developers to more easily create IoT solutions written in C for Azure and the Azure IoT platform.
 
-[![Build Status](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_apis/build/status/c/integrate-into-repo-c)](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_build/latest?definitionId=14)
+[![Build Status](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_apis/build/status/c/C-dogfood)](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_build/latest?definitionId=14)
 
 # Getting Started
 
@@ -13,7 +13,7 @@ The Azure IoT C SDK and accompanying libraries enable developers to more easily 
 ### Introducing you to the Azure IoT C SDK.
 
 * **Ubuntu Telemetry Walkthrough:** Explore the Azure IoT C SDK by compiling a sample application that sends telemetry to your IoT Hub device. 
-[Linked here.](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/ubuntu_telemetry_walkthrough.md)
+[Linked here.](./doc/ubuntu_telemetry_walkthrough.md)
 
 # Components 
 

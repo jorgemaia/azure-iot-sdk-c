@@ -6,8 +6,8 @@ This sample shows how to create a program that uses the Azure IoT SDK C package 
 
 1. If you have not already, follow the instructions [here](link!) to set up your IoT Hub enviornment on Azure.
 
-2. Create a IoT Hub device and copy it's device connection string to be used later. Instructions on this can be found [here](link!).
-
+2. Create a IoT Hub device and copy it's device connection string to be used later. Instructions on this can also be found in the link in step 1.
+   
 3. Make sure you have **CMake**, **g++**, and **gcc** installed on your development machine
 
     ```Shell
@@ -90,13 +90,13 @@ We will use `iothub_ll_telemetry_sample` to demonstrate compiling and running a 
 
 ## Run the Sample Application
 
-Once the sample application has been built using cmake, you can simply run it
+Once the sample application has been built using cmake, you can simply **run it**
 
 ```Shell
 ./iothub_ll_telemetry_sample
 ```
 
-If everything goes according to plan, you should see approximately the following output
+Did everything work? If so, you should see approximately the following output:
 
 ```Shell
 Creating IoTHub Device handle
