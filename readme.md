@@ -6,9 +6,12 @@ The Azure IoT C SDK and accompanying libraries enable developers to more easily 
 
 # Getting Started
 
-### Introducing you to the Azure IoT C SDK 
+### New to Azure IoT Hub?
 
 * **Introduction to Azure IoT Hub:** If you have never used the Azure IoT Hub, follow this guide to learn how to set up an IoT Hub and IoT Hub devices. [Linked here.](https://github.com/Azure/azure-iot-device-ecosystem/blob/master/setup_iothub.md) 
+
+### Introducing you to the Azure IoT C SDK.
+
 * **Ubuntu Telemetry Walkthrough:** Explore the Azure IoT C SDK by compiling a sample application that sends telemetry to your IoT Hub device. 
 [Linked here.](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/ubuntu_apt-get_sample_setup.md)
 
@@ -46,8 +49,8 @@ The API reference documentation for the C SDKs can be found [here][c-api-referen
 
 # Other Azure IoT SDKs
 
-To find Azure IoT SDKs in other languages, please refer to the [azure-iot-sdks][azure-iot-sdks] repository.
+To find Azure IoT SDKs in other languages, please refer to the [azure-iot-sdks](https://github.com/azure/azure-iot-sdks) repository.
 
 # Developing Azure IoT Applications
 
-To learn more about building Azure IoT Applications, you can visit the [Azure IoT Dev Center][iot-dev-center].
+To learn more about building Azure IoT Applications, you can visit the [Azure IoT Dev Center](https://azure.microsoft.com/en-us/develop/iot/).
