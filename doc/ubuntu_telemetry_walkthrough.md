@@ -56,13 +56,13 @@ We will use `iothub_ll_telemetry_sample` to demonstrate compiling and running a 
     nano iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample.c
     ```
 
-    Find the line containing the following code:
+    Find the line containing the following code...
 
     ```Shell
     static const char* connectionString = "[device connection string]";
     ```
 
-    and update the string between the quotations with your own device connection string.
+    ...and **update** the string between the quotations with your own device connection string.
 
     ```Shell
     static const char* connectionString = "HostName=foo;DeviceID=fooDevice;SharedAccessKey=fooKey";
@@ -127,4 +127,4 @@ Confirmation callback received for message 5 with result IOTHUB_CLIENT_CONFIRMAT
 Press any key to continue
 ```
 
-That's it. You've compiled and run a sample using the low level (\_ll\_) C SDK.
+That's it. You've compiled and run a sample using the low level (\_ll\_) C SDK. For more samples explore the samples folder [**here**](./iothub_client/samples/).
