@@ -1,102 +1,130 @@
-# Use apt-get to create a C device client project on Ubuntu
+# Using the Azure IoT C SDK on Ubuntu Docker Container
 
-This document describes how to create a program that uses the *azure-iot-sdk-c-dev* package on Ubuntu versions 15.04  and 15.10. The package contains the binaries you need to build an IoT Hub client application using C. The document describes how to install the package using **apt-get** and then build an application using **CMake**.
+This sample shows how to create a program that uses the Azure IoT SDK C package on Ubuntu apt package manager.
 
-Before you start, make sure you have **CMake**, **g++**, and **gcc** installed on your development machine:
+## Setting up IoT Hub Environment
 
-```Shell
-sudo apt-get install cmake build-essential
-```
+1. If you have not already, follow the instructions [here](link!) to set up your IoT Hub enviornment on Azure.
 
-## Update and install the azure-iot-sdk-c-dev package on your machine
+2. Create a IoT Hub device and copy it's device connection string to be used later. Instructions on this can be found [here](link!).
 
-Complete the following steps to install the AzureIoT binaries on your development machine:
-
-1. Add the AzureIoT repository to the machine:
+3. Make sure you have **CMake**, **g++**, and **gcc** installed on your development machine
 
     ```Shell
-    sudo apt-get install -y software-properties-common
+    sudo apt install cmake build-essential
+    ```
+
+## Install Azure IoT C SDK on Your Machine
+
+We will use the `apt` package manager to download the binaries needed to build an IoT Hub client application using C.
+
+1. Add the Azure IoT repository
+
+    ```Shell
+    sudo apt install -y software-properties-common
     sudo add-apt-repository ppa:aziotsdklinux/ppa-azureiot
-    sudo apt-get update
+    sudo apt update
     ```
 
 2. Install the azure-iot-sdk-c-dev package
 
     ```Shell
-    sudo apt-get install -y azure-iot-sdk-c-dev
+    sudo apt install -y azure-iot-sdk-c-dev
     ```
 
-## Create an application using CMake
-
-The following steps outline how you can use CMake to build an IoT Hub client application after you have installed the azure-iot-sdk-c-dev package on your development machine.
-
-1. Create a CMakeLists.txt file for the application. The example shown here assumes you are using the *serializer* module in your code, that your application uses the AMQP protocol, and that your source code is contained in the files **sample.c**, **sample.h**, and **main.c**. You can add source files by changing the contents of the **sample_application_c_files** and **sample_application_h_files** sets. If you are not using the serializer module, you can omit it from **target_link_libraries**. If you are using a different protocol (such as MQTT) you need to change the content of **target_link_libraries** accordingly.
+3. If you haven't already, clone the Azure IoT C SDK repo from Github
 
     ```Shell
-    cmake_minimum_required(VERSION 2.8.11)
-
-    set (CMAKE_C_FLAGS "--std=c99 ${CMAKE_C_FLAGS}")
-
-    set(AZUREIOT_INC_FOLDER ".." "/usr/include/azureiot" "/usr/include/azureiot/inc")
-
-    include_directories(${AZUREIOT_INC_FOLDER})
-
-    set(sample_application_c_files
-        ./sample.c
-        ./main.c
-    )
-
-    set(sample_application_h_files
-        ./sample.h
-    )
-
-    add_executable(sample_app ${sample_application_c_files} ${sample_application_h_files})
-
-    target_link_libraries(sample_app
-        serializer
-        iothub_client
-        iothub_client_amqp_transport
-        aziotsharedutil
-        uamqp
-        pthread
-        curl
-        ssl
-        crypto
-        m
-    )
+    git clone  https://github.com/Azure/azure-iot-sdk-c.git
+    cd azure-iot-sdk-c
+    git submodule update --init --recursive
     ```
 
-2. Create a directory that will store the make files that CMake creates and then run the **cmake** and **make** commands as follows:
+## Create an Application
+
+We will use `iothub_ll_telemetry_sample` to demonstrate compiling and running a sample.
+
+1. Note the location where you have cloned the `azure-iot-sdk-c` repo. We will assume it is cloned to the home directory for convenience, but if not you can adjust the path accordingly.
+
+   ```Shell
+   cd ~/azure-iot-sdk-c/
+   ```
+
+2. You now will use the device connection string you copied while setting up the IoT Hub Enviornment. Using your favorite text editor (we will use nano), edit the `iothub_ll_telemetry_sample` file.
 
     ```Shell
-    mkdir cmake
-    cd cmake
-    cmake ../[Directory that contains your CMakeLists.txt File]
-    make
+    nano iothub_client/samples/iothub_ll_telemetry_sample/iothub_ll_telemetry_sample.c
     ```
 
-## Notes
+    Find the line containing the following code:
 
-The Azure IoT client libraries and their dependencies install to the following locations.
+    ```Shell
+    static const char* connectionString = "[device connection string]";
+    ```
 
-Libraries install in /usr/lib:
+    and update the string between the quotations with your own device connection string.
 
-* libiothub_client_amqp_transport.a
-* libiothub_client_http_transport.a
-* libiothub_client_mqtt_transport.a
-* libserializer.a
-* libiothub_client.a
+    ```Shell
+    static const char* connectionString = "HostName=foo;DeviceID=fooDevice;SharedAccessKey=fooKey";
+    ```
 
-All azure-iot-sdk header files install in /usr/include/azureiotsdk.
+    Save and close the file.
 
-Dependencies install in /usr/lib:
+3. Build the sample using cmake. First navigate to the sample folder.
 
-* libumqtt.a
-* libamqp.a
-* libaziotsharedutil.a
+    ```Shell
+    cd ~/azure-iot-sdk-c/iothub_client/samples/iothub_ll_telemetry_sample/linux/
+    ```
 
-To remove the azure-iot-sdk-c-dev package, run the following command:
+    Then compile using cmake.
+
+    ```Shell
+    cmake .
+    ```
+
+    Finally, build the sample.
+
+    ```Shell
+    cmake --build .
+    ```
+
+## Run the Sample Application
+
+Once the sample application has been built using cmake, you can simply run it
 
 ```Shell
-sudo apt-get --purge remove azure-iot-sdk-c-dev
+./iothub_ll_telemetry_sample
 ```
+
+If everything goes according to plan, you should see approximately the following output
+
+```Shell
+Creating IoTHub Device handle
+Sending message 1 to IoTHub
+Sending message 2 to IoTHub
+Sending message 3 to IoTHub
+Sending message 4 to IoTHub
+Sending message 5 to IoTHub
+-> 00:07:23 CONNECT | VER: 4 | KEEPALIVE: 240 | FLAGS: 192 | USERNAME: yosephhub.azure-devices.net/testDevice/?api-version=2017-11-08-preview&DeviceClientType=iothubclient%2f1.2.10%20(native%3b%20Linux%3b%20x86_64) | PWD: XXXX | CLEAN: 0
+<- 00:07:23 CONNACK | SESSION_PRESENT: true | RETURN_CODE: 0x0
+The device client is connected to iothub
+-> 00:07:23 PUBLISH | IS_DUP: false | RETAIN: 0 | QOS: DELIVER_AT_LEAST_ONCE | TOPIC_NAME: devices/testDevice/messages/events/property_key=property_value | PACKET_ID: 2 | PAYLOAD_LEN: 12
+-> 00:07:23 PUBLISH | IS_DUP: false | RETAIN: 0 | QOS: DELIVER_AT_LEAST_ONCE | TOPIC_NAME: devices/testDevice/messages/events/property_key=property_value | PACKET_ID: 3 | PAYLOAD_LEN: 12
+-> 00:07:23 PUBLISH | IS_DUP: false | RETAIN: 0 | QOS: DELIVER_AT_LEAST_ONCE | TOPIC_NAME: devices/testDevice/messages/events/property_key=property_value | PACKET_ID: 4 | PAYLOAD_LEN: 12
+-> 00:07:23 PUBLISH | IS_DUP: false | RETAIN: 0 | QOS: DELIVER_AT_LEAST_ONCE | TOPIC_NAME: devices/testDevice/messages/events/property_key=property_value | PACKET_ID: 5 | PAYLOAD_LEN: 12
+-> 00:07:23 PUBLISH | IS_DUP: false | RETAIN: 0 | QOS: DELIVER_AT_LEAST_ONCE | TOPIC_NAME: devices/testDevice/messages/events/property_key=property_value | PACKET_ID: 6 | PAYLOAD_LEN: 12
+<- 00:07:24 PUBACK | PACKET_ID: 2
+Confirmation callback received for message 1 with result IOTHUB_CLIENT_CONFIRMATION_OK
+<- 00:07:24 PUBACK | PACKET_ID: 3
+Confirmation callback received for message 2 with result IOTHUB_CLIENT_CONFIRMATION_OK
+<- 00:07:24 PUBACK | PACKET_ID: 4
+Confirmation callback received for message 3 with result IOTHUB_CLIENT_CONFIRMATION_OK
+<- 00:07:24 PUBACK | PACKET_ID: 5
+Confirmation callback received for message 4 with result IOTHUB_CLIENT_CONFIRMATION_OK
+<- 00:07:24 PUBACK | PACKET_ID: 6
+Confirmation callback received for message 5 with result IOTHUB_CLIENT_CONFIRMATION_OK
+-> 00:07:24 DISCONNECT
+Press any key to continue
+```
+
+That's it. You've compiled and run a sample using the low level (\_ll\_) C SDK.
