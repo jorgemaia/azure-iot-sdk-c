@@ -13,7 +13,7 @@ The Azure IoT C SDK and accompanying libraries enable developers to more easily 
 ### Introducing you to the Azure IoT C SDK.
 
 * **Ubuntu Telemetry Walkthrough:** Explore the Azure IoT C SDK by compiling a sample application that sends telemetry to your IoT Hub device. 
-[Linked here.](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/ubuntu_apt-get_sample_setup.md)
+[Linked here.](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/ubuntu_telemetry_walkthrough.md)
 
 # Components 
 
