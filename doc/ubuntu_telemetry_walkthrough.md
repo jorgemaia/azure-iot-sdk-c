@@ -127,4 +127,4 @@ Confirmation callback received for message 5 with result IOTHUB_CLIENT_CONFIRMAT
 Press any key to continue
 ```
 
-That's it. You've compiled and run a sample using the low level (\_ll\_) C SDK. For more samples explore the samples folder [**here**](./iothub_client/samples/).
+That's it. You've compiled and run a sample using the low level (\_ll\_) C SDK. For more samples explore the samples folder [**here**](../iothub_client/samples/).
