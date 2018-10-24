@@ -1,6 +1,10 @@
 # Overview - Azure IoT C SDK
 
+<<<<<<< HEAD
 The Azure IoT C SDK and accompanying libraries enable developers to more easily create IoT solutions written in C for Azure and the Azure IoT platform.
+=======
+[![Build Status](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_apis/build/status/c/integrate-into-repo-C)](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_build/latest?definitionId=85)
+>>>>>>> 506cf3e6cdc0f55510aa027cba295aa910cdd341
 
 [![Build Status](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_apis/build/status/c/integrate-into-repo-C)](https://azure-iot-sdks.visualstudio.com/azure-iot-sdks/_build/latest?definitionId=85)
 
