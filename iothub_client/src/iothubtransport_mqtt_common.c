@@ -1653,7 +1653,6 @@ static void mqtt_operation_complete_callback(MQTT_CLIENT_HANDLE handle, MQTT_CLI
             {
                 // Close the client so we can reconnect again
                 transport_data->mqttClientStatus = MQTT_CLIENT_STATUS_NOT_CONNECTED;
-                transport_data->currPacketState = DISCONNECT_TYPE;
                 break;
             }
             case MQTT_CLIENT_ON_UNSUBSCRIBE_ACK:
