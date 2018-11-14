@@ -12,6 +12,7 @@ extern "C"
 #else
 #include <stddef.h>
 #include <time.h>
+#include <stdbool.h>
 #endif
 
 #include "azure_c_shared_utility/macro_utils.h"
@@ -34,6 +35,7 @@ extern IOTHUB_TEST_CLIENT_RESULT IoTHubTest_ListenForEvent(IOTHUB_TEST_HANDLE de
 extern IOTHUB_TEST_CLIENT_RESULT IoTHubTest_ListenForRecentEvent(IOTHUB_TEST_HANDLE devhubHandle, pfIoTHubMessageCallback msgCallback, size_t partitionCount, void* context, double maxDrainTimeInSeconds);
 extern IOTHUB_TEST_CLIENT_RESULT IoTHubTest_ListenForEventForMaxDrainTime(IOTHUB_TEST_HANDLE devhubHandle, pfIoTHubMessageCallback msgCallback, size_t partitionCount, void* context);
 extern IOTHUB_TEST_CLIENT_RESULT IoTHubTest_SendMessage(IOTHUB_TEST_HANDLE devhubHandle, const unsigned char* data, size_t len);
+extern IOTHUB_TEST_CLIENT_RESULT IoTHubTest_SetLogging(IOTHUB_TEST_HANDLE devhubHandle, bool logging);
 
 #ifdef __cplusplus
 }

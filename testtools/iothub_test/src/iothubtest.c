@@ -98,6 +98,7 @@ typedef struct IOTHUB_VALIDATION_INFO_TAG
     void* onMessageReceivedContext;
     THREAD_HANDLE asyncWorkThread;
     bool keepThreadAlive;
+    bool logging;
 } IOTHUB_VALIDATION_INFO;
 
 typedef struct MESSAGE_RECEIVER_CONTEXT_TAG
@@ -1159,6 +1160,8 @@ IOTHUB_TEST_CLIENT_RESULT IoTHubTest_ListenForEvent(IOTHUB_TEST_HANDLE devhubHan
                     }
                     else
                     {
+                        connection_set_trace(connection, devhubValInfo->logging);
+
                         char tempBuffer[256];
                         const char filter_name[] = "apache.org:selector-filter:string";
                         int filter_string_length = sprintf(tempBuffer, "amqp.annotation.x-opt-enqueuedtimeutc > %llu", ((unsigned long long)receiveTimeRangeStart - 330) * 1000);
@@ -1588,5 +1591,22 @@ IOTHUB_TEST_CLIENT_RESULT IoTHubTest_SendMessage(IOTHUB_TEST_HANDLE devhubHandle
         }
     }
 
+    return result;
+}
+
+IOTHUB_TEST_CLIENT_RESULT IoTHubTest_SetLogging(IOTHUB_TEST_HANDLE devhubHandle, bool logging)
+{
+    IOTHUB_TEST_CLIENT_RESULT result;
+    if (devhubHandle == NULL)
+    {
+        result = IOTHUB_TEST_CLIENT_ERROR;
+    }
+    else
+    {
+        IOTHUB_VALIDATION_INFO* devhubValInfo = (IOTHUB_VALIDATION_INFO*)devhubHandle;
+
+        devhubValInfo->logging = logging;
+        result = IOTHUB_TEST_CLIENT_OK;
+    }
     return result;
 }
