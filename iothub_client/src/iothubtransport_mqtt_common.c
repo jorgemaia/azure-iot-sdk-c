@@ -325,6 +325,32 @@ static void free_transport_handle_data(MQTTTRANSPORT_HANDLE_DATA* transport_data
     free(transport_data);
 }
 
+int IoTHub_Transport_ValidateCallbacks(const TRANSPORT_CALLBACKS_INFO* transport_cb)
+{
+    int result;
+    if (
+        transport_cb == NULL ||
+        transport_cb->connection_status_cb == NULL ||
+        transport_cb->msg_input_cb == NULL ||
+        transport_cb->msg_cb == NULL ||
+        transport_cb->send_complete_cb == NULL ||
+        transport_cb->prod_info_cb == NULL ||
+        transport_cb->twin_rpt_state_complete_cb == NULL ||
+        transport_cb->twin_retrieve_prop_complete_cb == NULL ||
+        transport_cb->method_complete_cb == NULL
+        )
+    {
+        LogError("Failure callback function NULL");
+        result = __FAILURE__;
+    }
+    else
+    {
+        result = 0;
+    }
+    return result;
+}
+
+
 int IoTHubTransport_MQTT_Common_SetRetryPolicy(TRANSPORT_LL_HANDLE handle, IOTHUB_CLIENT_RETRY_POLICY retryPolicy, size_t retryTimeoutLimitInSeconds)
 {
     int result;
