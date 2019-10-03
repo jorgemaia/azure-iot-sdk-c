@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(azure_iot_sdks)
 
-include("configs/azure_iot_sdksFunctions.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/configs/azure_iot_sdksFunctions.cmake")
 
 getIoTSDKVersion()
 message(STATUS "IoT Client SDK Version = ${IOT_SDK_VERSION}")
@@ -63,9 +63,6 @@ option(run_e2e_tests "set run_e2e_tests to ON to run e2e tests (default is OFF)"
 option(run_unittests "set run_unittests to ON to run unittests (default is OFF)" OFF)
 option(run_longhaul_tests "set run_longhaul_tests to ON to run longhaul tests (default is OFF)[if possible, they are always build]" OFF)
 option(skip_samples "set skip_samples to ON to skip building samples (default is OFF)[if possible, they are always build]" OFF)
-option(compileOption_C "passes a string to the command line of the C compiler" OFF)
-option(compileOption_CXX "passes a string to the command line of the C++ compiler" OFF)
-option(linkerOption "passes a string to the shared and exe linker options of the C compiler" OFF)
 option(build_service_client "controls whether the iothub_service_client is built or not" ON)
 option(build_provisioning_service_client "controls whether the provisioning_service_client is built or not" ON)
 option(build_python "builds the Python native iothub_client module" OFF)
@@ -77,6 +74,9 @@ option(use_prov_client "Enable provisioning client" OFF)
 option(use_tpm_simulator "tpm simulator type of hsm used with the provisioning client" OFF)
 option(use_edge_modules "Enable support for running modules against Azure IoT Edge" OFF)
 option(use_custom_heap "use externally defined heap functions instead of the malloc family" OFF)
+set(compileOption_C "" CACHE STRING "passes a string to the command line of the C compiler")
+set(compileOption_CXX "" CACHE STRING "passes a string to the command line of the C++ compiler")
+set(linkerOption "" CACHE STRING "passes a string to the shared and exe linker options of the C compiler")
 
 set(use_prov_client_core OFF)
 
@@ -98,9 +98,12 @@ if (WIN32 OR MACOSX)
 else()
     option(use_openssl "set use_openssl to ON to use OpenSSL." ON)
 endif()
+option(use_mbedtls "set use_mbedtls to ON to use mbedtls." OFF)
 
 # openssl samples on Windows need to have a trusted cert set
-if ((WIN32 AND "${use_openssl}") OR "${use_wolfssl}")
+if ((WIN32 AND "${use_openssl}") OR "${use_wolfssl}" OR "${use_mbedtls}" OR "${use_bearssl}")
+    option(use_sample_trusted_cert "Set flag in samples to use SDK's built-in CA as TrustedCerts" ON)
+elseif("${use_bearssl}")
     option(use_sample_trusted_cert "Set flag in samples to use SDK's built-in CA as TrustedCerts" ON)
 else()
     option(use_sample_trusted_cert "Set flag in samples to use SDK's built-in CA as TrustedCerts" OFF)
@@ -181,25 +184,21 @@ if (LINUX)
 endif()
 
 # if any compiler has a command line switch called "OFF" then it will need special care
-if (NOT "${compileOption_C}" STREQUAL "OFF")
+if (NOT "${compileOption_C}" STREQUAL "")
     set(CMAKE_C_FLAGS "${compileOption_C} ${CMAKE_C_FLAGS}")
 endif()
 
-if (NOT "${compileOption_CXX}" STREQUAL "OFF")
+if (NOT "${compileOption_CXX}" STREQUAL "")
     set(CMAKE_CXX_FLAGS "${compileOption_CXX} ${CMAKE_CXX_FLAGS}")
 endif()
 
-if (NOT "${linkerOption}" STREQUAL "OFF")
+if (NOT "${linkerOption}" STREQUAL "")
     message("linkerOption: ${CMAKE_SHARED_LINKER_FLAGS}")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${linkerOption}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${linkerOption}")
 endif()
 
 include("configs/azure_iot_sdksFunctions.cmake")
-
-if (${run_unittests} OR ${run_e2e_tests} OR ${run_sfc_tests})
-    include("dependencies-test.cmake")
-endif()
 
 # do not add or build any tests of the dependencies
 set(original_run_e2e_tests ${run_e2e_tests})
@@ -209,21 +208,55 @@ set(original_skip_samples ${skip_samples})
 set(run_e2e_tests OFF)
 set(run_unittests OFF)
 set(skip_samples ON)
+set(use_cppunittest ON)
+
+if (NOT ${use_installed_dependencies})
+    if (NOT TARGET azure_macro_utils_c AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/deps/azure-macro-utils-c/CMakeLists.txt")
+        add_subdirectory(deps/azure-macro-utils-c)
+    endif()
+    if (NOT TARGET umock_c)
+        # Get the repo if it's not there
+        add_subdirectory(deps/umock-c)
+    endif()
+
+    if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
+        if (NOT TARGET testrunnerswitcher)
+            add_subdirectory(deps/azure-c-testrunnerswitcher)
+        endif()
+        if (NOT TARGET ctest)
+            # Get the repo if it's not there
+            add_subdirectory(deps/azure-ctest)
+        endif()
+        enable_testing()
+    endif()
+else()
+    if (NOT azure_macro_utils_cFOUND)
+        find_package(azure_macro_utils_c REQUIRED CONFIG)
+    endif ()
+    if (NOT umock_cFOUND)
+        find_package(umock_c REQUIRED CONFIG)
+    endif ()
+endif()
+
+include_directories(${MACRO_UTILS_INC_FOLDER})
+include_directories(${UMOCK_C_INC_FOLDER})
 
 include("dependencies.cmake")
+if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
+    # Used for serializer
+    add_subdirectory("${SHARED_UTIL_FOLDER}/testtools/sal")
+    add_subdirectory("${SHARED_UTIL_FOLDER}/testtools/micromock")
+endif()
 
 if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
     set(SHARED_UTIL_REAL_TEST_FOLDER ${CMAKE_CURRENT_LIST_DIR}/c-utility/tests/real_test_files CACHE INTERNAL "this is what needs to be included when doing test sources" FORCE)
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/c-utility/testtools)
 endif()
 
-set_platform_files(${CMAKE_CURRENT_LIST_DIR}/c-utility)
+set_platform_files(${SHARED_UTIL_FOLDER})
 
 set(run_e2e_tests ${original_run_e2e_tests})
 set(run_unittests ${original_run_unittests})
 set(skip_samples ${original_skip_samples})
-
-enable_testing()
 
 # this project uses several other projects that are build not by these CMakeFiles
 # this project also targets several OSes
@@ -324,7 +357,7 @@ if (${build_service_client})
     add_subdirectory(iothub_service_client)
 endif()
 
-if (${run_e2e_tests} OR ${run_longhaul_tests} OR ${nuget_e2e_tests} OR ${run_sfc_tests})
+if (${run_e2e_tests} OR ${run_longhaul_tests} OR ${nuget_e2e_tests} OR ${run_sfc_tests} OR ${run_unittests})
     add_subdirectory(testtools)
 endif()
 

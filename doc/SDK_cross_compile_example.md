@@ -26,12 +26,16 @@ Though it may be possible to use a host machine running a variant of Windows thi
 Open a terminal prompt on your host machine in the manner you prefer.
 
 We need to acquire the SDK source code. This is available in the [C SDK GitHub repository](https://github.com/Azure/azure-iot-sdk-c.git). We clone this too our host machine as follows:
-```
+
+```Shell
 cd ~
 mkdir Source
 cd Source
-git clone --recursive https://github.com/Azure/azure-iot-sdk-c.git
+git clone https://github.com/Azure/azure-iot-sdk-c.git
+cd azure-iot-sdk-c
+git submodule update --init
 ```
+
 Further information regarding this step and other set up requirements can be found in this [guide](https://github.com/Azure/azure-iot-sdk-c/blob/master/doc/devbox_setup.md). This step is only included in this document to establish the directory structure used for the rest of the example.
 
 You might consider building the SDK for your local platform at this point simply to ensure you have all the required components. At the very least, you must ensure that the SDK's prerequisite libraries are installed on your Raspberry Pi. You can achieve this by running the script _setup.sh_ found in _azure-iot-sdk-c/build\_all/linux_.
@@ -47,7 +51,7 @@ Unfortunately, this does not give us all the files that are required to build th
 ```
 cd ~/RPiTools/tools/arm-bcm2708/\
 gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf
-rsync -rl --safe-links pi@<your Pi identifier>:/{lib,usr} .
+rsync -rl --exclude '/usr/lib/cups/backend/vnc' --safe-links pi@<your Pi identifier>:/{lib,usr} .
 ```
 In the above command replace &lt;*your Pi identifier*&gt; with the IP address of your Raspberry Pi. If you no longer have a user identity on your Raspberry Pi called pi, then you will need to substitute an existing user identity.
 

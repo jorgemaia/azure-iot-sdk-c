@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #endif
 #include "testrunnerswitcher.h"
-#include "umock_c.h"
-#include "umock_c_negative_tests.h"
-#include "umocktypes_charptr.h"
+#include "umock_c/umock_c.h"
+#include "umock_c/umock_c_negative_tests.h"
+#include "umock_c/umocktypes_charptr.h"
 
 #if defined _MSC_VER
 #pragma warning(disable: 4054) /* MSC incorrectly fires this */
@@ -75,6 +75,9 @@ IMPLEMENT_UMOCK_C_ENUM_TYPE(IOTHUB_CLIENT_STATUS, IOTHUB_CLIENT_STATUS_VALUES);
 TEST_DEFINE_ENUM_TYPE(IOTHUB_CLIENT_RETRY_POLICY, IOTHUB_CLIENT_RETRY_POLICY_VALUES);
 IMPLEMENT_UMOCK_C_ENUM_TYPE(IOTHUB_CLIENT_RETRY_POLICY, IOTHUB_CLIENT_RETRY_POLICY_VALUES);
 
+TEST_DEFINE_ENUM_TYPE(PLATFORM_INFO_OPTION, PLATFORM_INFO_OPTION_VALUES);
+IMPLEMENT_UMOCK_C_ENUM_TYPE(PLATFORM_INFO_OPTION, PLATFORM_INFO_OPTION_VALUES);
+
 static TEST_MUTEX_HANDLE test_serialize_mutex;
 
 #define TEST_RETRY_POLICY IOTHUB_CLIENT_RETRY_EXPONENTIAL_BACKOFF_WITH_JITTER
@@ -101,6 +104,7 @@ static pfIoTHubTransport_SetRetryPolicy             IoTHubTransportMqtt_SetRetry
 static pfIoTHubTransport_GetSendStatus              IoTHubTransportMqtt_GetSendStatus;
 static pfIoTHubTransport_Subscribe_DeviceTwin       IoTHubTransportMqtt_Subscribe_DeviceTwin;
 static pfIoTHubTransport_Unsubscribe_DeviceTwin     IoTHubTransportMqtt_Unsubscribe_DeviceTwin;
+static pfIoTHubTransport_GetTwinAsync         IoTHubTransportMqtt_GetTwinAsync;
 static pfIoTHubTransport_Subscribe_DeviceMethod     IoTHubTransportMqtt_Subscribe_DeviceMethod;
 static pfIoTHubTransport_Unsubscribe_DeviceMethod   IoTHubTransportMqtt_Unsubscribe_DeviceMethod;
 static pfIoTHubTransport_DeviceMethod_Response      IoTHubTransportMqtt_DeviceMethod_Response;
@@ -108,6 +112,7 @@ static pfIoTHubTransport_ProcessItem                IoTHubTransportMqtt_ProcessI
 static pfIoTHubTransport_Subscribe_InputQueue       IoTHubTransportMqtt_Subscribe_InputQueue;
 static pfIoTHubTransport_Unsubscribe_InputQueue     IoTHubTransportMqtt_Unsubscribe_InputQueue;
 static pfIoTHubTransport_SetCallbackContext         IoTHubTransportMqtt_SetCallbackContext;
+static pfIoTHubTransport_GetSupportedPlatformInfo   IotHubTransportMqtt_GetSupportedPlatformInfo;
 
 static TRANSPORT_LL_HANDLE my_IoTHubTransport_MQTT_Common_Create(const IOTHUBTRANSPORT_CONFIG* config, MQTT_GET_IO_TRANSPORT get_io_transport, TRANSPORT_CALLBACKS_INFO* cb_info, void* ctx)
 {
@@ -118,7 +123,7 @@ static TRANSPORT_LL_HANDLE my_IoTHubTransport_MQTT_Common_Create(const IOTHUBTRA
     return TEST_TRANSPORT_HANDLE;
 }
 
-DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
+MU_DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
 
 static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 {
@@ -309,6 +314,7 @@ TEST_SUITE_INITIALIZE(suite_init)
     REGISTER_UMOCK_ALIAS_TYPE(IOTHUB_CLIENT_RETRY_POLICY, int);
     REGISTER_UMOCK_ALIAS_TYPE(METHOD_HANDLE, void*);
     REGISTER_TYPE(TLSIO_CONFIG*, TLSIO_CONFIG_ptr);
+    REGISTER_UMOCK_ALIAS_TYPE(IOTHUB_CLIENT_DEVICE_TWIN_CALLBACK, void*);
 
     REGISTER_GLOBAL_MOCK_HOOK(IoTHubTransport_MQTT_Common_Create, my_IoTHubTransport_MQTT_Common_Create);
 
@@ -343,6 +349,7 @@ TEST_SUITE_INITIALIZE(suite_init)
     IoTHubTransportMqtt_GetSendStatus = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_GetSendStatus;
     IoTHubTransportMqtt_Subscribe_DeviceTwin = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_Subscribe_DeviceTwin;
     IoTHubTransportMqtt_Unsubscribe_DeviceTwin = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_Unsubscribe_DeviceTwin;
+    IoTHubTransportMqtt_GetTwinAsync = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_GetTwinAsync;
     IoTHubTransportMqtt_Subscribe_DeviceMethod = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_Subscribe_DeviceMethod;
     IoTHubTransportMqtt_Unsubscribe_DeviceMethod = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_Unsubscribe_DeviceMethod;
     IoTHubTransportMqtt_DeviceMethod_Response = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_DeviceMethod_Response;
@@ -350,6 +357,7 @@ TEST_SUITE_INITIALIZE(suite_init)
     IoTHubTransportMqtt_Subscribe_InputQueue = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_Subscribe_InputQueue;
     IoTHubTransportMqtt_Unsubscribe_InputQueue = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_Unsubscribe_InputQueue;
     IoTHubTransportMqtt_SetCallbackContext = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_SetCallbackContext;
+    IotHubTransportMqtt_GetSupportedPlatformInfo = ((TRANSPORT_PROVIDER*)MQTT_Protocol())->IoTHubTransport_GetSupportedPlatformInfo;
 }
 
 TEST_SUITE_CLEANUP(suite_cleanup)
@@ -611,6 +619,27 @@ TEST_FUNCTION(IoTHubTransportMqtt_Unsubscribe_DeviceTwin_success)
 
     // assert
     ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+
+    //cleanup
+}
+
+// Tests_SRS_IOTHUB_MQTT_TRANSPORT_09_001: [ IoTHubTransportMqtt_GetTwinAsync shall shall call into the IoTHubTransport_MQTT_Common_GetTwinAsync function. ]
+TEST_FUNCTION(IoTHubTransportMqtt_GetTwinAsync_success)
+{
+    // arrange
+    IOTHUBTRANSPORT_CONFIG config = { 0 };
+    SetupIothubTransportConfig(&config, TEST_DEVICE_ID, TEST_DEVICE_KEY, TEST_IOTHUB_NAME, TEST_IOTHUB_SUFFIX, TEST_PROTOCOL_GATEWAY_HOSTNAME);
+    TRANSPORT_LL_HANDLE handle = IoTHubTransportMqtt_Create(&config, g_transport_cb_info, NULL);
+
+    umock_c_reset_all_calls();
+    STRICT_EXPECTED_CALL(IoTHubTransport_MQTT_Common_GetTwinAsync(handle, (IOTHUB_CLIENT_DEVICE_TWIN_CALLBACK)0x4444, (void*)0x4445));
+
+    // act
+    IOTHUB_CLIENT_RESULT result = IoTHubTransportMqtt_GetTwinAsync(handle, (IOTHUB_CLIENT_DEVICE_TWIN_CALLBACK)0x4444, (void*)0x4445);
+
+    // assert
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_EQUAL(int, IOTHUB_CLIENT_OK, result);
 
     //cleanup
 }
@@ -886,6 +915,74 @@ TEST_FUNCTION(IoTHubTransportMqtt_SetCallbackContext_success)
     // assert
     ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
     ASSERT_ARE_EQUAL(int, 0, result);
+
+    // cleanup
+}
+
+TEST_FUNCTION(IoTHubTransportMqtt_GetSupportedPlatformInfo)
+{
+    // arrange
+    IOTHUBTRANSPORT_CONFIG config = { 0 };
+    SetupIothubTransportConfig(&config, TEST_DEVICE_ID, TEST_DEVICE_KEY, TEST_IOTHUB_NAME, TEST_IOTHUB_SUFFIX, TEST_PROTOCOL_GATEWAY_HOSTNAME);
+    TRANSPORT_LL_HANDLE handle = IoTHubTransportMqtt_Create(&config, g_transport_cb_info, NULL);
+
+    PLATFORM_INFO_OPTION expected_info = PLATFORM_INFO_OPTION_RETRIEVE_SQM;
+
+    umock_c_reset_all_calls();
+    STRICT_EXPECTED_CALL(IoTHubTransport_MQTT_GetSupportedPlatformInfo(IGNORED_PTR_ARG, IGNORED_PTR_ARG))
+        .CopyOutArgumentBuffer_info(&expected_info, sizeof(expected_info))
+        .SetReturn(0);
+
+    // act
+    PLATFORM_INFO_OPTION info;
+    int result = IotHubTransportMqtt_GetSupportedPlatformInfo(handle, &info);
+
+    // assert
+
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_EQUAL(int, result, 0);
+    ASSERT_ARE_EQUAL(int, info, PLATFORM_INFO_OPTION_RETRIEVE_SQM);
+
+    // cleanup
+}
+
+TEST_FUNCTION(IoTHubTransportMqtt_GetSupportedPlatformInfo_NULL_handle)
+{
+    // arrange
+    umock_c_reset_all_calls();
+    STRICT_EXPECTED_CALL(IoTHubTransport_MQTT_GetSupportedPlatformInfo(IGNORED_PTR_ARG, IGNORED_PTR_ARG))
+        .SetReturn(1);
+
+    // act
+    PLATFORM_INFO_OPTION info;
+    int result = IotHubTransportMqtt_GetSupportedPlatformInfo(NULL, &info);
+
+    // assert
+
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_NOT_EQUAL(int, result, 0);
+
+    // cleanup
+}
+
+TEST_FUNCTION(IoTHubTransportMqtt_GetSupportedPlatformInfo_NULL_info)
+{
+    // arrange
+    IOTHUBTRANSPORT_CONFIG config = { 0 };
+    SetupIothubTransportConfig(&config, TEST_DEVICE_ID, TEST_DEVICE_KEY, TEST_IOTHUB_NAME, TEST_IOTHUB_SUFFIX, TEST_PROTOCOL_GATEWAY_HOSTNAME);
+    TRANSPORT_LL_HANDLE handle = IoTHubTransportMqtt_Create(&config, g_transport_cb_info, NULL);
+
+    umock_c_reset_all_calls();
+    STRICT_EXPECTED_CALL(IoTHubTransport_MQTT_GetSupportedPlatformInfo(IGNORED_PTR_ARG, IGNORED_PTR_ARG))
+        .SetReturn(1);
+
+    // act
+    int result = IotHubTransportMqtt_GetSupportedPlatformInfo(handle, NULL);
+
+    // assert
+
+    ASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());
+    ASSERT_ARE_NOT_EQUAL(int, result, 0);
 
     // cleanup
 }

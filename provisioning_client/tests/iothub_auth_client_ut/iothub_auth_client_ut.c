@@ -20,20 +20,20 @@ static void my_gballoc_free(void* ptr)
 }
 
 #include "testrunnerswitcher.h"
-#include "umock_c.h"
-#include "umocktypes_charptr.h"
-#include "umocktypes_stdint.h"
-#include "umock_c_negative_tests.h"
-#include "azure_c_shared_utility/macro_utils.h"
+#include "umock_c/umock_c.h"
+#include "umock_c/umocktypes_charptr.h"
+#include "umock_c/umocktypes_stdint.h"
+#include "umock_c/umock_c_negative_tests.h"
+#include "azure_macro_utils/macro_utils.h"
 
 #include "azure_prov_client/internal/iothub_auth_client.h"
 
 #define ENABLE_MOCKS
 #include "azure_c_shared_utility/gballoc.h"
-#include "azure_c_shared_utility/umock_c_prod.h"
+#include "umock_c/umock_c_prod.h"
 #include "azure_c_shared_utility/strings.h"
 #include "azure_c_shared_utility/sastoken.h"
-#include "azure_c_shared_utility/base64.h"
+#include "azure_c_shared_utility/azure_base64.h"
 #include "azure_c_shared_utility/crt_abstractions.h"
 #include "azure_c_shared_utility/urlencode.h"
 #include "azure_c_shared_utility/hmacsha256.h"
@@ -104,10 +104,10 @@ IMPLEMENT_UMOCK_C_ENUM_TYPE(DEVICE_AUTH_TYPE, DEVICE_AUTH_TYPE_VALUES);
 TEST_DEFINE_ENUM_TYPE(IOTHUB_SECURITY_TYPE, IOTHUB_SECURITY_TYPE_VALUES);
 IMPLEMENT_UMOCK_C_ENUM_TYPE(IOTHUB_SECURITY_TYPE, IOTHUB_SECURITY_TYPE_VALUES);
 
-TEST_DEFINE_ENUM_TYPE(HMACSHA256_RESULT, HMACSHA256_RESULT);
-IMPLEMENT_UMOCK_C_ENUM_TYPE(HMACSHA256_RESULT, HMACSHA256_RESULT);
+TEST_DEFINE_ENUM_TYPE(HMACSHA256_RESULT, HMACSHA256_RESULT_VALUES);
+IMPLEMENT_UMOCK_C_ENUM_TYPE(HMACSHA256_RESULT, HMACSHA256_RESULT_VALUES);
 
-static const HSM_CLIENT_TPM_INTERFACE test_tpm_interface = 
+static const HSM_CLIENT_TPM_INTERFACE test_tpm_interface =
 {
     hsm_client_create,
     hsm_client_destroy,
@@ -164,7 +164,7 @@ static const HSM_CLIENT_HTTP_EDGE_INTERFACE test_http_edge_interface =
 };
 #endif
 
-static BUFFER_HANDLE my_Base64_Decoder(const char* source)
+static BUFFER_HANDLE my_Azure_Base64_Decode(const char* source)
 {
     (void)source;
     return (BUFFER_HANDLE)my_gballoc_malloc(1);
@@ -253,7 +253,7 @@ static int my_mallocAndStrcpy_s(char** destination, const char* source)
     return 0;
 }
 
-static STRING_HANDLE my_Base64_Encode_Bytes(const unsigned char* source, size_t length)
+static STRING_HANDLE my_Azure_Base64_Encode_Bytes(const unsigned char* source, size_t length)
 {
     (void)source;
     (void)length;
@@ -288,12 +288,12 @@ static DEVICE_AUTH_CREDENTIAL_INFO g_test_sas_cred_no_keyname;
 static DEVICE_AUTH_CREDENTIAL_INFO g_test_x509_cred;
 static DEVICE_AUTH_CREDENTIAL_INFO g_test_key_cred;
 
-DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
+MU_DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
 
 static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 {
     char temp_str[256];
-    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
+    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", MU_ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
     ASSERT_FAIL(temp_str);
 }
 
@@ -349,8 +349,8 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
 
         REGISTER_GLOBAL_MOCK_HOOK(mallocAndStrcpy_s, my_mallocAndStrcpy_s);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(mallocAndStrcpy_s, __LINE__);
-        REGISTER_GLOBAL_MOCK_HOOK(Base64_Encode_Bytes, my_Base64_Encode_Bytes);
-        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Base64_Encode_Bytes, NULL);
+        REGISTER_GLOBAL_MOCK_HOOK(Azure_Base64_Encode_Bytes, my_Azure_Base64_Encode_Bytes);
+        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Azure_Base64_Encode_Bytes, NULL);
         REGISTER_GLOBAL_MOCK_HOOK(URL_Encode, my_URL_Encode);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(URL_Encode, NULL);
         REGISTER_GLOBAL_MOCK_RETURN(STRING_c_str, TEST_STRING_VALUE);
@@ -360,8 +360,8 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
         REGISTER_GLOBAL_MOCK_HOOK(URL_EncodeString, my_URL_EncodeString);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(URL_EncodeString, NULL);
 
-        REGISTER_GLOBAL_MOCK_HOOK(Base64_Decoder, my_Base64_Decoder);
-        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Base64_Decoder, NULL);
+        REGISTER_GLOBAL_MOCK_HOOK(Azure_Base64_Decode, my_Azure_Base64_Decode);
+        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Azure_Base64_Decode, NULL);
         REGISTER_GLOBAL_MOCK_HOOK(BUFFER_new, my_BUFFER_new);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(BUFFER_new, NULL);
         REGISTER_GLOBAL_MOCK_RETURN(BUFFER_length, TEST_DATA_LEN);
@@ -373,7 +373,7 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
 
         REGISTER_GLOBAL_MOCK_RETURN(HMACSHA256_ComputeHash, HMACSHA256_OK);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(HMACSHA256_ComputeHash, HMACSHA256_ERROR);
-        
+
 
 #if defined(HSM_TYPE_X509) || defined(HSM_AUTH_TYPE_CUSTOM)
         REGISTER_GLOBAL_MOCK_RETURN(iothub_security_type, IOTHUB_SECURITY_TYPE_SAS);
@@ -429,33 +429,19 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
         TEST_MUTEX_RELEASE(g_testByTest);
     }
 
-    static int should_skip_index(size_t current_index, const size_t skip_array[], size_t length)
-    {
-        int result = 0;
-        for (size_t index = 0; index < length; index++)
-        {
-            if (current_index == skip_array[index])
-            {
-                result = __LINE__;
-                break;
-            }
-        }
-        return result;
-    }
-
     static void setup_sign_sas_data_mocks(bool use_key)
     {
         if (use_key)
         {
             STRICT_EXPECTED_CALL(hsm_client_get_symmetric_key(IGNORED_PTR_ARG));
-            STRICT_EXPECTED_CALL(Base64_Decoder(IGNORED_PTR_ARG));
+            STRICT_EXPECTED_CALL(Azure_Base64_Decode(IGNORED_PTR_ARG));
             STRICT_EXPECTED_CALL(BUFFER_new());
-            STRICT_EXPECTED_CALL(BUFFER_length(IGNORED_PTR_ARG));
-            STRICT_EXPECTED_CALL(BUFFER_u_char(IGNORED_PTR_ARG));
+            STRICT_EXPECTED_CALL(BUFFER_length(IGNORED_PTR_ARG)).CallCannotFail();
+            STRICT_EXPECTED_CALL(BUFFER_u_char(IGNORED_PTR_ARG)).CallCannotFail();
             STRICT_EXPECTED_CALL(HMACSHA256_ComputeHash(IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_PTR_ARG));
-            STRICT_EXPECTED_CALL(BUFFER_length(IGNORED_PTR_ARG));
+            STRICT_EXPECTED_CALL(BUFFER_length(IGNORED_PTR_ARG)).CallCannotFail();
             STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
-            STRICT_EXPECTED_CALL(BUFFER_u_char(IGNORED_PTR_ARG));
+            STRICT_EXPECTED_CALL(BUFFER_u_char(IGNORED_PTR_ARG)).CallCannotFail();
             STRICT_EXPECTED_CALL(BUFFER_delete(IGNORED_PTR_ARG));
             STRICT_EXPECTED_CALL(BUFFER_delete(IGNORED_PTR_ARG));
             STRICT_EXPECTED_CALL(gballoc_free(IGNORED_PTR_ARG));
@@ -468,13 +454,13 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
 
     static void setup_iothub_device_auth_generate_credentials_mocks(bool base64_encode_signature, bool urlencode_token_scope, bool use_key)
     {
-        STRICT_EXPECTED_CALL(size_tToString(IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG));
+        STRICT_EXPECTED_CALL(size_tToString(IGNORED_PTR_ARG, IGNORED_NUM_ARG, IGNORED_NUM_ARG)).CallCannotFail();
         STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
 
         setup_sign_sas_data_mocks(use_key);
         if (base64_encode_signature)
         {
-            STRICT_EXPECTED_CALL(Base64_Encode_Bytes(IGNORED_PTR_ARG, IGNORED_NUM_ARG));
+            STRICT_EXPECTED_CALL(Azure_Base64_Encode_Bytes(IGNORED_PTR_ARG, IGNORED_NUM_ARG));
         }
         else
         {
@@ -484,16 +470,16 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
         if (urlencode_token_scope)
         {
             STRICT_EXPECTED_CALL(URL_EncodeString(IGNORED_PTR_ARG));
-            STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
-            STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
+            STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)).CallCannotFail();
+            STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)).CallCannotFail();
             STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
         }
         else
         {
-            STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
+            STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)).CallCannotFail();
         }
         STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
-        STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
+        STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG)).CallCannotFail();
         STRICT_EXPECTED_CALL(mallocAndStrcpy_s(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
         STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
         STRICT_EXPECTED_CALL(STRING_delete(IGNORED_PTR_ARG));
@@ -616,7 +602,7 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
     TEST_FUNCTION(iothub_device_auth_create_concrete_iothub_device_auth_create_fail)
     {
         //arrange
-        STRICT_EXPECTED_CALL(iothub_security_type()).SetReturn(IOTHUB_SECURITY_TYPE_X509);
+        STRICT_EXPECTED_CALL(iothub_security_type()).SetReturn(IOTHUB_SECURITY_TYPE_X509).CallCannotFail();
         STRICT_EXPECTED_CALL(gballoc_malloc(IGNORED_NUM_ARG));
         STRICT_EXPECTED_CALL(hsm_client_x509_interface()).SetReturn(&test_x509_interface);
         STRICT_EXPECTED_CALL(hsm_client_create()).SetReturn(NULL);
@@ -862,26 +848,19 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
 
         umock_c_negative_tests_snapshot();
 
-        size_t calls_cannot_fail[] = { 5, 7, 9, 10, 11, 12, 13 };
-
         //act
         size_t count = umock_c_negative_tests_call_count();
         for (size_t index = 0; index < count; index++)
         {
-            if (should_skip_index(index, calls_cannot_fail, sizeof(calls_cannot_fail)/sizeof(calls_cannot_fail[0])) != 0)
+            if (umock_c_negative_tests_can_call_fail(index))
             {
-                continue;
+                umock_c_negative_tests_reset();
+                umock_c_negative_tests_fail_call(index);
+
+                void* result = iothub_device_auth_generate_credentials(xda_handle, &g_test_sas_cred);
+
+                ASSERT_IS_NULL(result, "iothub_device_auth_generate_credentials failure in test %zu/%zu", index, count);
             }
-
-            umock_c_negative_tests_reset();
-            umock_c_negative_tests_fail_call(index);
-
-            char tmp_msg[128];
-            sprintf(tmp_msg, "iothub_device_auth_generate_credentials failure in test %zu/%zu", index, count);
-
-            void* result = iothub_device_auth_generate_credentials(xda_handle, &g_test_sas_cred);
-
-            ASSERT_IS_NULL(result, tmp_msg);
         }
 
         //cleanup
@@ -909,15 +888,15 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
         size_t count = umock_c_negative_tests_call_count();
         for (size_t index = 0; index < count; index++)
         {
-            umock_c_negative_tests_reset();
-            umock_c_negative_tests_fail_call(index);
+            if (umock_c_negative_tests_can_call_fail(index))
+            {
+                umock_c_negative_tests_reset();
+                umock_c_negative_tests_fail_call(index);
 
-            char tmp_msg[128];
-            sprintf(tmp_msg, "iothub_device_auth_generate_credentials riot failure in test %zu/%zu", index, count);
+                void* result = iothub_device_auth_generate_credentials(xda_handle, &g_test_sas_cred);
 
-            void* result = iothub_device_auth_generate_credentials(xda_handle, &g_test_sas_cred);
-
-            ASSERT_IS_NULL(result, tmp_msg);
+                ASSERT_IS_NULL(result, "iothub_device_auth_generate_credentials riot failure in test %zu/%zu", index, count);
+            }
         }
 
         //cleanup
@@ -985,36 +964,19 @@ BEGIN_TEST_SUITE(iothub_auth_client_ut)
 
         umock_c_negative_tests_snapshot();
 
-        size_t calls_cannot_fail[] = {
-            6, // STRING_c_str
-            7, // STRING_c_str
-            8, // STRING_delete
-            10, // STRING_c_str
-            12, // STRING_delete
-            13, // STRING_delete
-            14, // STRING_delete
-            15, // gballoc_free
-            16 // gballoc_free
-        };
-
         //act
         size_t count = umock_c_negative_tests_call_count();
         for (size_t index = 0; index < count; index++)
         {
-            if (should_skip_index(index, calls_cannot_fail, sizeof(calls_cannot_fail)/sizeof(calls_cannot_fail[0])) != 0)
+            if (umock_c_negative_tests_can_call_fail(index))
             {
-                continue;
+                umock_c_negative_tests_reset();
+                umock_c_negative_tests_fail_call(index);
+
+                void* result = iothub_device_auth_generate_credentials(xda_handle, &g_test_sas_cred);
+
+                ASSERT_IS_NULL(result, "iothub_device_auth_generate_credentials http edge failure in test %zu/%zu", index, count);
             }
-
-            umock_c_negative_tests_reset();
-            umock_c_negative_tests_fail_call(index);
-
-            char tmp_msg[128];
-            sprintf(tmp_msg, "iothub_device_auth_generate_credentials http edge failure in test %zu/%zu", index, count);
-
-            void* result = iothub_device_auth_generate_credentials(xda_handle, &g_test_sas_cred);
-
-            ASSERT_IS_NULL(result, tmp_msg);
         }
 
         //cleanup

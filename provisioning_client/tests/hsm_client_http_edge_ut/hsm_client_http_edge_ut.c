@@ -22,12 +22,12 @@ static void my_gballoc_free(void* ptr)
 }
 
 #include "testrunnerswitcher.h"
-#include "umock_c.h"
-#include "umocktypes_charptr.h"
-#include "umocktypes_stdint.h"
-#include "umocktypes_bool.h"
-#include "umock_c_negative_tests.h"
-#include "azure_c_shared_utility/macro_utils.h"
+#include "umock_c/umock_c.h"
+#include "umock_c/umocktypes_charptr.h"
+#include "umock_c/umocktypes_stdint.h"
+#include "umock_c/umocktypes_bool.h"
+#include "umock_c/umock_c_negative_tests.h"
+#include "azure_macro_utils/macro_utils.h"
 
 #if defined _MSC_VER
 #pragma warning(disable: 4054) /* MSC incorrectly fires this */
@@ -60,7 +60,7 @@ static void _Bool_ToString(char* string, size_t bufferSize, _Bool val)
 
 #define ENABLE_MOCKS
 #include "azure_c_shared_utility/gballoc.h"
-#include "azure_c_shared_utility/umock_c_prod.h"
+#include "umock_c/umock_c_prod.h"
 #include "azure_c_shared_utility/crt_abstractions.h"
 #include "azure_c_shared_utility/buffer_.h"
 #include "azure_c_shared_utility/strings.h"
@@ -69,7 +69,7 @@ static void _Bool_ToString(char* string, size_t bufferSize, _Bool val)
 #include "azure_c_shared_utility/socketio.h"
 #include "azure_uhttp_c/uhttp.h"
 #include "azure_c_shared_utility/envvariable.h"
-#include "azure_c_shared_utility/base64.h"
+#include "azure_c_shared_utility/azure_base64.h"
 #include "azure_c_shared_utility/urlencode.h"
 
 #include "parson.h"
@@ -90,8 +90,6 @@ static const char * const TEST_ENV_WORKLOADURI_HTTP_NO_ADDRESS = "http://:8080";
 static const char * const TEST_ENV_WORKLOADURI_DOMAIN_SOCKET = "unix:///test-socket";
 static const char * const TEST_ENV_WORKLOADURI_DOMAIN_SOCKET_NO_NAME = "unix://";
 
-
-
 static const unsigned char* TEST_SIGNING_DATA = (const unsigned char* )"Test/Data/To/Sign\nExpiry";
 static const int TEST_SIGNING_DATA_LENGTH = sizeof(TEST_SIGNING_DATA) - 1;
 
@@ -100,8 +98,6 @@ typedef enum TEST_PROTOCOL_TAG
    TEST_HTTP_PROTOCOL,
    TEST_DOMAIN_SOCKET_PROTOCOL
 } TEST_PROTOCOL;
-
-
 
 MOCKABLE_FUNCTION(, JSON_Value*, json_parse_string, const char *, string);
 MOCKABLE_FUNCTION(, char*, json_serialize_to_string, const JSON_Value*, value);
@@ -112,7 +108,6 @@ MOCKABLE_FUNCTION(, JSON_Status, json_object_clear, JSON_Object*, object);
 MOCKABLE_FUNCTION(, JSON_Value*, json_value_init_object);
 MOCKABLE_FUNCTION(, JSON_Object*, json_value_get_object, const JSON_Value *, value);
 MOCKABLE_FUNCTION(, void, json_value_free, JSON_Value*, value);
-
 
 #undef ENABLE_MOCKS
 
@@ -130,13 +125,9 @@ MOCKABLE_FUNCTION(, void, json_value_free, JSON_Value*, value);
 #define TEST_TIME_FOR_TIMEOUT ((double)100000000)
 #define TEST_TIME_FOR_TIMEOUT_T ((time_t)TEST_TIME_FOR_TIMEOUT)
 
-
-
-
 #define TEST_HTTP_CLIENT_HANDLE (HTTP_CLIENT_HANDLE)0x49
 #define TEST_HTTP_HEADERS_HANDLE (HTTP_HEADERS_HANDLE)0x50
 #define TEST_SOCKETIO_INTERFACE_DESCRIPTION     (const IO_INTERFACE_DESCRIPTION*)0x51
-
 
 static int my_mallocAndStrcpy_s(char** destination, const char* source)
 {
@@ -153,12 +144,12 @@ STRING_HANDLE STRING_construct_sprintf(const char* format, ...)
     return (STRING_HANDLE)my_gballoc_malloc(1);
 }
 
-DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
+MU_DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
 
 static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 {
     char temp_str[256];
-    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
+    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", MU_ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
     ASSERT_FAIL(temp_str);
 }
 
@@ -181,14 +172,12 @@ static void my_STRING_delete(STRING_HANDLE h)
     my_gballoc_free((void*)h);
 }
 
-
 HSM_HTTP_WORKLOAD_CONTEXT* workload_context;
 static int g_uhttp_client_dowork_call_count;
 static ON_HTTP_OPEN_COMPLETE_CALLBACK g_on_http_open;
 static void* g_http_open_ctx;
 static ON_HTTP_REQUEST_CALLBACK g_on_http_reply_recv;
 static void* g_http_reply_recv_ctx;
-
 
 static HTTP_CLIENT_HANDLE my_uhttp_client_create(const IO_INTERFACE_DESCRIPTION* io_interface_desc, const void* xio_param, ON_HTTP_ERROR_CALLBACK on_http_error, void* callback_ctx)
 {
@@ -329,8 +318,8 @@ TEST_SUITE_INITIALIZE(suite_init)
     REGISTER_GLOBAL_MOCK_RETURN(URL_Encode, TEST_STRING_HANDLE1);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(URL_Encode, NULL);
 
-    REGISTER_GLOBAL_MOCK_RETURN(Base64_Encode_Bytes, TEST_STRING_HANDLE2);
-    REGISTER_GLOBAL_MOCK_FAIL_RETURN(Base64_Encode_Bytes, NULL);
+    REGISTER_GLOBAL_MOCK_RETURN(Azure_Base64_Encode_Bytes, TEST_STRING_HANDLE2);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(Azure_Base64_Encode_Bytes, NULL);
 
     REGISTER_GLOBAL_MOCK_RETURN(STRING_c_str, TEST_STRING_1);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(STRING_c_str, NULL);
@@ -558,7 +547,7 @@ static void set_expected_calls_construct_json_signing_blob()
     STRICT_EXPECTED_CALL(STRING_concat(IGNORED_PTR_ARG, IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(STRING_c_str(IGNORED_PTR_ARG));
-    STRICT_EXPECTED_CALL(Base64_Encode_Bytes(IGNORED_PTR_ARG, IGNORED_NUM_ARG));
+    STRICT_EXPECTED_CALL(Azure_Base64_Encode_Bytes(IGNORED_PTR_ARG, IGNORED_NUM_ARG));
     STRICT_EXPECTED_CALL(json_value_init_object());
     STRICT_EXPECTED_CALL(json_value_get_object(IGNORED_PTR_ARG));
     STRICT_EXPECTED_CALL(json_object_set_string(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));

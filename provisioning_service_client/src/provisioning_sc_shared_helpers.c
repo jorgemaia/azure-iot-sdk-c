@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/gballoc.h"
@@ -18,12 +19,12 @@ int mallocAndStrcpy_overwrite(char** dest, const char* source)
     if (dest == NULL || source == NULL)
     {
         LogError("Invalid input");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else if (mallocAndStrcpy_s(&temp, source) != 0)
     {
         LogError("Failed to copy value from source");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
@@ -43,18 +44,18 @@ int copy_json_string_field(char** dest, JSON_Object* root_object, const char* js
     {
         if (mallocAndStrcpy_s(dest, string) != 0)
         {
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
     }
 
     return result;
 }
 
-int json_serialize_and_set_struct(JSON_Object* root_object, const char* json_key, void* structure, TO_JSON_FUNCTION toJson, NECESSITY necessity)
+int json_serialize_and_set_struct(JSON_Object* root_object, const char* json_key, void* structure, TO_JSON_FUNCTION toJson, bool is_required)
 {
     int result;
 
-    if (necessity == OPTIONAL && structure == NULL)
+    if (!is_required && structure == NULL)
     {
         result = 0;
     }
@@ -64,17 +65,17 @@ int json_serialize_and_set_struct(JSON_Object* root_object, const char* json_key
         if (structure == NULL)
         {
             LogError("NULL structure");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else if ((struct_val = toJson(structure)) == NULL)
         {
             LogError("Failed converting structure to JSON Value");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else if (json_object_set_value(root_object, json_key, struct_val) != JSONSuccess)
         {
             LogError("Failed to set JSON Value in JSON Object");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -85,26 +86,26 @@ int json_serialize_and_set_struct(JSON_Object* root_object, const char* json_key
     return result;
 }
 
-int json_deserialize_and_get_struct(void** dest, JSON_Object* root_object, const char* json_key, FROM_JSON_FUNCTION fromJson, NECESSITY necessity)
+int json_deserialize_and_get_struct(void** dest, JSON_Object* root_object, const char* json_key, FROM_JSON_FUNCTION fromJson, bool is_required)
 {
     int result;
 
     JSON_Object* struct_object = json_object_get_object(root_object, json_key);
-    if (necessity == OPTIONAL && struct_object == NULL)
+    if (!is_required && struct_object == NULL)
     {
         result = 0;
     }
-    else if (necessity == REQUIRED && struct_object == NULL)
+    else if (is_required && struct_object == NULL)
     {
         LogError("object required");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
         if ((*dest = fromJson(struct_object)) == NULL)
         {
             LogError("Failed to deserialize from JSON");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -212,17 +213,17 @@ int json_serialize_and_set_struct_array(JSON_Object* root_object, const char* js
     if (arr== NULL)
     {
         LogError("NULL structure");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else if ((arr_val = struct_array_toJson(arr, len, element_toJson)) == NULL)
     {
         LogError("Failed converting structure to JSON Value");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else if (json_object_set_value(root_object, json_key, arr_val) != JSONSuccess)
     {
         LogError("Failed to set JSON Value in JSON Object");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
@@ -239,7 +240,7 @@ int json_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_len, JS
     if (dest_arr == NULL || dest_len == NULL)
     {
         LogError("NULL pointer given");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
@@ -247,14 +248,14 @@ int json_deserialize_and_get_struct_array(void*** dest_arr, size_t* dest_len, JS
         if ((json_arr = json_object_get_array(root_object, json_key)) == NULL)
         {
             LogError("Can't get JSON array");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else if ((*dest_len = json_array_get_count(json_arr)) > 0)
         {
             if ((*dest_arr = struct_array_fromJson(json_arr, *dest_len, element_fromJson)) == NULL)
             {
                 LogError("Failed to deserialize from JSON");
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
         }
     }

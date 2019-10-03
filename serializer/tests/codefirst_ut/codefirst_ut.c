@@ -13,21 +13,21 @@
 #include <inttypes.h>
 #endif
 
-void* my_gballoc_malloc(size_t t)
+static void* my_gballoc_malloc(size_t t)
 {
     return malloc(t);
 }
 
-void my_gballoc_free(void * t)
+static void my_gballoc_free(void * t)
 {
     free(t);
 }
 
-#include "umock_c.h"
-#include "umocktypes_charptr.h"
-#include "umocktypes_bool.h"
-#include "umocktypes_stdint.h"
-#include "umock_c_negative_tests.h"
+#include "umock_c/umock_c.h"
+#include "umock_c/umocktypes_charptr.h"
+#include "umock_c/umocktypes_bool.h"
+#include "umock_c/umocktypes_stdint.h"
+#include "umock_c/umock_c_negative_tests.h"
 
 #include "azure_c_shared_utility/optimize_size.h"
 #include "azure_c_shared_utility/crt_abstractions.h"
@@ -42,7 +42,7 @@ void my_gballoc_free(void * t)
 #include "real_strings.h"
 
 #include "serializer.h"
-#include "azure_c_shared_utility/macro_utils.h"
+#include "azure_macro_utils/macro_utils.h"
 
 #include "testrunnerswitcher.h"
 #include "codefirst.h"
@@ -56,7 +56,7 @@ IMPLEMENT_UMOCK_C_ENUM_TYPE(AGENT_DATA_TYPES_RESULT, AGENT_DATA_TYPES_RESULT_VAL
 //TEST_DEFINE_ENUM_TYPE(SCHEMA_RESULT, SCHEMA_RESULT_VALUES);
 IMPLEMENT_UMOCK_C_ENUM_TYPE(SCHEMA_RESULT, SCHEMA_RESULT_VALUES);
 
-DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
+MU_DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
 
 
 /*the below namespace only exists to prove that it can be compiled with all the data types*/
@@ -667,7 +667,7 @@ static unsigned char edmBinarySource[] = { 1, 42, 43, 44, 1 };
 static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 {
     char temp_str[256];
-    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
+    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", MU_ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
     ASSERT_FAIL(temp_str);
 }
 
@@ -774,6 +774,11 @@ BEGIN_TEST_SUITE(CodeFirst_ut_Dummy_Data_Provider)
         REGISTER_GLOBAL_MOCK_HOOK(Device_StartTransaction, my_Device_StartTransaction);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(Device_StartTransaction, NULL);
 
+        REGISTER_GLOBAL_MOCK_RETURN(Device_IngestDesiredProperties, DEVICE_OK);
+        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Device_IngestDesiredProperties, DEVICE_ERROR);
+        REGISTER_GLOBAL_MOCK_RETURN(Device_ExecuteCommand, EXECUTE_COMMAND_SUCCESS);
+        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Device_ExecuteCommand, EXECUTE_COMMAND_ERROR);
+
         REGISTER_GLOBAL_MOCK_HOOK(Device_CancelTransaction, my_Device_CancelTransaction);
         REGISTER_GLOBAL_MOCK_HOOK(Create_AGENT_DATA_TYPE_from_SINT32, my_Create_AGENT_DATA_TYPE_from_SINT32);
         REGISTER_GLOBAL_MOCK_FAIL_RETURN(Create_AGENT_DATA_TYPE_from_SINT32, AGENT_DATA_TYPES_JSON_ENCODER_ERRROR);
@@ -801,7 +806,11 @@ BEGIN_TEST_SUITE(CodeFirst_ut_Dummy_Data_Provider)
 
         REGISTER_GLOBAL_MOCK_HOOK(Device_DestroyTransaction_ReportedProperties, my_Device_DestroyTransaction_ReportedProperties);
 
-        REGISTER_GLOBAL_MOCK_HOOK(Schema_GetModelDesiredPropertyCount, my_Schema_GetModelDesiredPropertyCount);
+        
+        REGISTER_GLOBAL_MOCK_RETURN(Schema_AddDeviceRef, SCHEMA_OK);
+        REGISTER_GLOBAL_MOCK_FAIL_RETURN(Schema_AddDeviceRef, SCHEMA_ERROR);
+
+            REGISTER_GLOBAL_MOCK_HOOK(Schema_GetModelDesiredPropertyCount, my_Schema_GetModelDesiredPropertyCount);
         REGISTER_GLOBAL_MOCK_HOOK(Schema_GetModelModelCount, my_Schema_GetModelModelCount);
 
 
@@ -1951,11 +1960,10 @@ BEGIN_TEST_SUITE(CodeFirst_ut_Dummy_Data_Provider)
             .IgnoreArgument_desiredPropertyCount(); /*0 desired properties*/
         STRICT_EXPECTED_CALL(Schema_GetModelModelCount(TEST_MODEL_HANDLE, IGNORED_PTR_ARG))
             .IgnoreArgument_modelCount(); /*0 model in model*/
-        STRICT_EXPECTED_CALL(Schema_ReleaseDeviceRef(IGNORED_PTR_ARG))
-            .IgnoreArgument(1);
-        STRICT_EXPECTED_CALL(Schema_DestroyIfUnused(IGNORED_PTR_ARG))
-            .IgnoreArgument(1);
+        STRICT_EXPECTED_CALL(Schema_ReleaseDeviceRef(IGNORED_PTR_ARG));
+        STRICT_EXPECTED_CALL(Schema_DestroyIfUnused(IGNORED_PTR_ARG));
         STRICT_EXPECTED_CALL(Device_Destroy(TEST_DEVICE_HANDLE));
+
         // act
         CodeFirst_DestroyDevice(device);
 

@@ -10,10 +10,10 @@
 #endif
 
 #include "testrunnerswitcher.h"
-#include "umock_c.h"
-#include "umocktypes_charptr.h"
-#include "umock_c_negative_tests.h"
-#include "umocktypes_stdint.h"
+#include "umock_c/umock_c.h"
+#include "umock_c/umocktypes_charptr.h"
+#include "umock_c/umock_c_negative_tests.h"
+#include "umock_c/umocktypes_stdint.h"
 
 #define ENABLE_MOCKS
 #include "azure_c_shared_utility/strings.h"
@@ -36,7 +36,7 @@ TEST_DEFINE_ENUM_TYPE(IOTHUB_MESSAGING_RESULT, IOTHUB_MESSAGING_RESULT_VALUES);
 IMPLEMENT_UMOCK_C_ENUM_TYPE(IOTHUB_MESSAGING_RESULT, IOTHUB_MESSAGING_RESULT_VALUES);
 
 #define ENABLE_MOCKS
-#include "azure_c_shared_utility/umock_c_prod.h"
+#include "umock_c/umock_c_prod.h"
 MOCKABLE_FUNCTION(, void, TEST_FUNC_IOTHUB_OPEN_COMPLETE_CALLBACK, void*, context);
 MOCKABLE_FUNCTION(, void, TEST_FUNC_IOTHUB_SEND_COMPLETE_CALLBACK, void*, context, IOTHUB_MESSAGING_RESULT, messagingResult);
 MOCKABLE_FUNCTION(, void, TEST_FUNC_IOTHUB_FEEDBACK_MESSAGE_RECEIVED_CALLBACK, void*, context, IOTHUB_SERVICE_FEEDBACK_BATCH*, feedbackBatch);
@@ -72,12 +72,12 @@ static int my_mallocAndStrcpy_s(char** destination, const char* source)
 
 static int TEST_ISOPENED = false;
 
-DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
+MU_DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
 
 static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 {
     char temp_str[256];
-    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
+    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", MU_ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
     ASSERT_FAIL(temp_str);
 }
 
@@ -216,6 +216,9 @@ TEST_SUITE_INITIALIZE(TestClassInitialize)
     REGISTER_GLOBAL_MOCK_HOOK(ThreadAPI_Join, my_ThreadAPI_Join);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(ThreadAPI_Join, THREADAPI_ERROR);
 
+    REGISTER_GLOBAL_MOCK_RETURN(ThreadAPI_Create, THREADAPI_OK);
+    REGISTER_GLOBAL_MOCK_FAIL_RETURN(ThreadAPI_Create, THREADAPI_ERROR);
+
     REGISTER_GLOBAL_MOCK_HOOK(IoTHubMessaging_LL_Create, my_IoTHubMessaging_LL_Create);
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(IoTHubMessaging_LL_Create, NULL);
 
@@ -230,6 +233,8 @@ TEST_SUITE_INITIALIZE(TestClassInitialize)
     REGISTER_GLOBAL_MOCK_FAIL_RETURN(IoTHubMessaging_LL_SetFeedbackMessageCallback, IOTHUB_MESSAGING_ERROR);
 
     REGISTER_GLOBAL_MOCK_RETURN(IoTHubMessaging_LL_SetTrustedCert, IOTHUB_MESSAGING_OK);
+
+    REGISTER_GLOBAL_MOCK_RETURN(IoTHubMessaging_LL_Send, IOTHUB_MESSAGING_OK);
 }
 
 TEST_SUITE_CLEANUP(TestClassCleanup)
@@ -637,11 +642,9 @@ TEST_FUNCTION(IoTHubMessaging_SendAsync_happy_path)
 
     umock_c_reset_all_calls();
 
-    STRICT_EXPECTED_CALL(Lock(IGNORED_PTR_ARG))
-        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(Lock(IGNORED_PTR_ARG));
 
-    STRICT_EXPECTED_CALL(ThreadAPI_Create(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG))
-        .IgnoreAllArguments();
+    STRICT_EXPECTED_CALL(ThreadAPI_Create(IGNORED_PTR_ARG, IGNORED_PTR_ARG, IGNORED_PTR_ARG));
 
     /* If modules are re-enabled, re-enable this code and add testing_module paramater to this function
     if (testing_module == true)
@@ -652,8 +655,7 @@ TEST_FUNCTION(IoTHubMessaging_SendAsync_happy_path)
 
     STRICT_EXPECTED_CALL(IoTHubMessaging_LL_Send((IOTHUB_MESSAGING_HANDLE)0X3333, deviceId, TEST_IOTHUB_MESSAGE_HANDLE, TEST_IOTHUB_SEND_COMPLETE_CALLBACK, (void*)0x4242));
 
-    STRICT_EXPECTED_CALL(Unlock(IGNORED_PTR_ARG))
-        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(Unlock(IGNORED_PTR_ARG));
 
     // act
     IOTHUB_MESSAGING_RESULT result;

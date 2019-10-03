@@ -26,9 +26,11 @@
 #include "iothub_messaging_ll.h"
 #include "iothub_sc_version.h"
 
-DEFINE_ENUM_STRINGS(IOTHUB_FEEDBACK_STATUS_CODE, IOTHUB_FEEDBACK_STATUS_CODE_VALUES);
-DEFINE_ENUM_STRINGS(IOTHUB_MESSAGE_SEND_STATE, IOTHUB_MESSAGE_SEND_STATE_VALUES);
-DEFINE_ENUM_STRINGS(IOTHUB_MESSAGING_RESULT, IOTHUB_MESSAGING_RESULT_VALUES);
+#define SIZE_OF_PERCENT_S_IN_FMT_STRING 2
+
+MU_DEFINE_ENUM_STRINGS_WITHOUT_INVALID(IOTHUB_FEEDBACK_STATUS_CODE, IOTHUB_FEEDBACK_STATUS_CODE_VALUES);
+MU_DEFINE_ENUM_STRINGS_WITHOUT_INVALID(IOTHUB_MESSAGE_SEND_STATE, IOTHUB_MESSAGE_SEND_STATE_VALUES);
+MU_DEFINE_ENUM_STRINGS_WITHOUT_INVALID(IOTHUB_MESSAGING_RESULT, IOTHUB_MESSAGING_RESULT_VALUES);
 
 typedef struct CALLBACK_DATA_TAG
 {
@@ -89,7 +91,7 @@ static int setMessageId(IOTHUB_MESSAGE_HANDLE iothub_message_handle, PROPERTIES_
         {
             /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
             LogError("Failed to create an AMQP_VALUE for the messageId property value.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -100,7 +102,7 @@ static int setMessageId(IOTHUB_MESSAGE_HANDLE iothub_message_handle, PROPERTIES_
             {
                 /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
                 LogInfo("Failed to set value of uAMQP message 'message-id' property (%d).", api_call_result);
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
             else
             {
@@ -129,7 +131,7 @@ static int setCorrelationId(IOTHUB_MESSAGE_HANDLE iothub_message_handle, PROPERT
         {
             /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
             LogError("Failed to create an AMQP_VALUE for the messageId property value.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -140,7 +142,7 @@ static int setCorrelationId(IOTHUB_MESSAGE_HANDLE iothub_message_handle, PROPERT
             {
                 /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
                 LogInfo("Failed to set value of uAMQP message 'message-id' property (%d).", api_call_result);
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
             else
             {
@@ -168,7 +170,7 @@ static int addPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_message_handl
     {
         /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
         LogError("Failed to get properties map from uAMQP message (error code %d).", api_call_result);
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     /*Codes_SRS_IOTHUBMESSAGING_12_080: [ If UAMQP message properties were not present then a new properties container shall be created using properties_create ] */
     else if (uamqp_message_properties == NULL &&
@@ -176,7 +178,7 @@ static int addPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_message_handl
     {
         /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
         LogError("Failed to create properties map for uAMQP message (error code %d).", api_call_result);
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
@@ -185,14 +187,14 @@ static int addPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_message_handl
         if (setMessageId(iothub_message_handle, uamqp_message_properties) != 0)
         {
             LogError("Failed to set uampq messageId.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         /*Codes_SRS_IOTHUBMESSAGING_12_084: [ Correlation-id from the IOTHUB_MESSAGE shall be read using IoTHubMessage_GetCorrelationId ] */
         /*Codes_SRS_IOTHUBMESSAGING_12_085: [ As correlation-id is optional field, if it is not set on the IOTHUB_MESSAGE, message_create_from_iothub_message() shall ignore it and continue normally ] */
         else if (setCorrelationId(iothub_message_handle, uamqp_message_properties) != 0)
         {
             LogError("Failed to set uampq correlationId.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -201,14 +203,14 @@ static int addPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_message_handl
             {
                 /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
                 LogError("Could not create properties for message - properties_set_to failed");
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
             /*Codes_SRS_IOTHUBMESSAGING_12_038: [ IoTHubMessaging_LL_SendMessage shall set the uAMQP message properties to the given message properties by calling message_set_properties ] */
             else if ((api_call_result = message_set_properties(uamqp_message, uamqp_message_properties)) != 0)
             {
                 /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
                 LogError("Failed to set properties map on uAMQP message (error code %d).", api_call_result);
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
             else
             {
@@ -236,7 +238,7 @@ static int addApplicationPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_me
     {
         /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
         LogError("Failed to get the internals of the property map.");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
@@ -250,7 +252,7 @@ static int addApplicationPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_me
             {
                 /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
                 LogError("Failed to create uAMQP map for the properties.");
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
             else
             {
@@ -299,7 +301,7 @@ static int addApplicationPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_me
                     {
                         /*Codes_SRS_IOTHUBMESSAGING_12_040: [ If any of the uAMQP call fails IoTHubMessaging_LL_SendMessage shall return IOTHUB_MESSAGING_ERROR ] */
                         LogError("Failed to transfer the message properties to the uAMQP message.");
-                        result = __FAILURE__;
+                        result = MU_FAILURE;
                     }
                     else
                     {
@@ -309,7 +311,7 @@ static int addApplicationPropertiesToAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_me
                 else
                 {
                     LogError("Failed to set application property into the the uAMQP property map.");
-                    result = __FAILURE__;
+                    result = MU_FAILURE;
                 }
                 amqpvalue_destroy(uamqp_map);
             }
@@ -338,7 +340,7 @@ static int getMessageContentAndSize(IOTHUB_MESSAGE_HANDLE message, unsigned cons
         if (IoTHubMessage_GetByteArray(message, &contentByteArr, &contentSize) != IOTHUB_MESSAGE_OK)
         {
             LogError("Failed getting the BYTE array representation of the IOTHUB_MESSAGE_HANDLE instance.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -351,7 +353,7 @@ static int getMessageContentAndSize(IOTHUB_MESSAGE_HANDLE message, unsigned cons
         if ((contentStr = IoTHubMessage_GetString(message)) == NULL)
         {
             LogError("Failed getting the STRING representation of the IOTHUB_MESSAGE_HANDLE instance.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
@@ -363,7 +365,7 @@ static int getMessageContentAndSize(IOTHUB_MESSAGE_HANDLE message, unsigned cons
         break;
     default:
         LogError("Cannot parse IOTHUB_MESSAGE_HANDLE with content type IOTHUBMESSAGE_UNKNOWN.");
-        result = __FAILURE__;
+        result = MU_FAILURE;
         break;
     }
     return result;
@@ -457,15 +459,17 @@ static char* createAuthCid(IOTHUB_MESSAGING_HANDLE messagingHandle)
     }
     else
     {
-        const char* AMQP_SEND_AUTHCID_FMT = "iothubowner@sas.root.%s";
-        size_t authCidLen = strlen(AMQP_SEND_AUTHCID_FMT) + strlen(messagingHandle->iothubName);
+        const char AMQP_SEND_AUTHCID_FMT[] = "%s@sas.root.%s";
+        const int AMQP_SEND_AUTHCID_FMT_LENGTH = sizeof(AMQP_SEND_AUTHCID_FMT) - 2 * SIZE_OF_PERCENT_S_IN_FMT_STRING;
+
+        size_t authCidLen = strlen(messagingHandle->keyName) + AMQP_SEND_AUTHCID_FMT_LENGTH + strlen(messagingHandle->iothubName);
 
         if ((buffer = (char*)malloc(authCidLen + 1)) == NULL)
         {
             LogError("Malloc failed for authCid.");
             result = NULL;
         }
-        else if ((snprintf(buffer, authCidLen + 1, AMQP_SEND_AUTHCID_FMT, messagingHandle->iothubName)) < 0)
+        else if ((snprintf(buffer, authCidLen + 1, AMQP_SEND_AUTHCID_FMT, messagingHandle->keyName, messagingHandle->iothubName)) < 0)
         {
             LogError("sprintf_s failed for authCid.");
             free(buffer);
@@ -1009,21 +1013,21 @@ static int attachServiceClientTypeToLink(LINK_HANDLE link)
     if ((attach_properties = amqpvalue_create_map()) == NULL)
     {
         LogError("Failed to create the map for service client type.");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else
     {
         if ((serviceClientTypeKeyName = amqpvalue_create_symbol("com.microsoft:client-version")) == NULL)
         {
             LogError("Failed to create the key name for the service client type.");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
         else
         {
             if ((serviceClientTypeValue = amqpvalue_create_string(IOTHUB_SERVICE_CLIENT_TYPE_PREFIX IOTHUB_SERVICE_CLIENT_BACKSLASH IOTHUB_SERVICE_CLIENT_VERSION)) == NULL)
             {
                 LogError("Failed to create the key value for the service client type.");
-                result = __FAILURE__;
+                result = MU_FAILURE;
             }
             else
             {

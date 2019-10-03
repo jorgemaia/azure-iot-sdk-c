@@ -23,12 +23,12 @@ void my_gballoc_free(void * t)
     free(t);
 }
 
-#include "azure_c_shared_utility/macro_utils.h"
-#include "umock_c.h"
-#include "umocktypes_charptr.h"
-#include "umocktypes_bool.h"
-#include "umocktypes_stdint.h"
-#include "umock_c_negative_tests.h"
+#include "azure_macro_utils/macro_utils.h"
+#include "umock_c/umock_c.h"
+#include "umock_c/umocktypes_charptr.h"
+#include "umock_c/umocktypes_bool.h"
+#include "umock_c/umocktypes_stdint.h"
+#include "umock_c/umock_c_negative_tests.h"
 
 #define ENABLE_MOCKS
 #include "agenttypesystem.h"
@@ -38,7 +38,7 @@ void my_gballoc_free(void * t)
 
 #include "testrunnerswitcher.h"
 #include "codefirst.h"
-#include "azure_c_shared_utility/macro_utils.h"
+#include "azure_macro_utils/macro_utils.h"
 
 #include "serializer.h"
 
@@ -170,12 +170,10 @@ static TEST_MUTEX_HANDLE g_testByTest;
 
 static STRING_HANDLE global_bufferTemp;
 
-DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
+MU_DEFINE_ENUM_STRINGS(UMOCK_C_ERROR_CODE, UMOCK_C_ERROR_CODE_VALUES)
 static void on_umock_c_error(UMOCK_C_ERROR_CODE error_code)
 {
-    char temp_str[256];
-    (void)snprintf(temp_str, sizeof(temp_str), "umock_c reported error :%s", ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
-    ASSERT_FAIL(temp_str);
+    ASSERT_FAIL("umock_c reported error :%s", MU_ENUM_TO_STRING(UMOCK_C_ERROR_CODE, error_code));
 }
 
 TEST_DEFINE_ENUM_TYPE(CODEFIRST_RESULT, CODEFIRST_RESULT_VALUES);
@@ -239,6 +237,8 @@ TEST_SUITE_INITIALIZE(TestClassInitialize)
 
     REGISTER_GLOBAL_MOCK_HOOK(Schema_GetModelDesiredPropertyCount, my_Schema_GetModelDesiredPropertyCount);
     REGISTER_GLOBAL_MOCK_HOOK(Schema_GetModelModelCount, my_Schema_GetModelModelCount);
+
+    REGISTER_GLOBAL_MOCK_RETURN(Schema_AddDeviceRef, SCHEMA_OK);
 
 }
 
@@ -500,7 +500,7 @@ TEST_FUNCTION(InvokeAction_goToLocation_with_a_struct_and_a_double_fails)
     someLocationAndDouble[0].value.edmComplexType.fields = someLocationAndDouble_1;
 
     someLocationAndDouble[1].type = EDM_DOUBLE_TYPE;
-    someLocationAndDouble[1].value.edmDouble.value = EDM_DOUBLE_TYPE;
+    someLocationAndDouble[1].value.edmDouble.value = 5.0;
 
     STRICT_EXPECTED_CALL(Schema_GetModelName(TEST_MODEL_HANDLE)).SetReturn("TruckType");
 
@@ -539,7 +539,7 @@ TEST_FUNCTION(InvokeAction_goToLocation_with_a_double_and_a_struct_fails)
     someLocationAndDouble[1].value.edmComplexType.fields = someLocationAndDouble_1;
 
     someLocationAndDouble[0].type = EDM_DOUBLE_TYPE;
-    someLocationAndDouble[0].value.edmDouble.value = EDM_DOUBLE_TYPE;
+    someLocationAndDouble[0].value.edmDouble.value = 5.0;
 
     STRICT_EXPECTED_CALL(Schema_GetModelName(TEST_MODEL_HANDLE)).SetReturn("TruckType");
 

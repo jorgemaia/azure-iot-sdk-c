@@ -160,7 +160,7 @@ static JSON_Value* twinProperties_toJson(INITIAL_TWIN_PROPERTIES* twin_propertie
     }
 
     //Set data
-    else if (json_serialize_and_set_struct(root_object, INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED, twin_properties->desired, (TO_JSON_FUNCTION)twinCollection_toJson, OPTIONAL) != 0)
+    else if (json_serialize_and_set_struct(root_object, INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED, twin_properties->desired, (TO_JSON_FUNCTION)twinCollection_toJson, false) != 0)
     {
         LogError("Failed to set '%s' in JSON string representation of Twin Properties", INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED);
         json_value_free(root_value);
@@ -182,7 +182,7 @@ static INITIAL_TWIN_PROPERTIES* twinProperties_fromJson(JSON_Object* root_object
     {
         memset(new_twinProperties, 0, sizeof(INITIAL_TWIN_PROPERTIES));
 
-        if (json_deserialize_and_get_struct((void**)&(new_twinProperties->desired), root_object, INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED, (FROM_JSON_FUNCTION)twinCollection_fromJson, OPTIONAL) != 0)
+        if (json_deserialize_and_get_struct((void**)&(new_twinProperties->desired), root_object, INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED, (FROM_JSON_FUNCTION)twinCollection_fromJson, false) != 0)
         {
             LogError("Failed to set '%s' in Twin Properties", INITIAL_TWIN_PROPERTIES_JSON_KEY_DESIRED);
             twinProperties_free(new_twinProperties);
@@ -224,13 +224,13 @@ JSON_Value* initialTwin_toJson(const INITIAL_TWIN_HANDLE twin)
     }
 
     //Set data
-    else if (json_serialize_and_set_struct(root_object, INITIAL_TWIN_JSON_KEY_TAGS, twin->tags, (TO_JSON_FUNCTION)twinCollection_toJson, OPTIONAL) != 0)
+    else if (json_serialize_and_set_struct(root_object, INITIAL_TWIN_JSON_KEY_TAGS, twin->tags, (TO_JSON_FUNCTION)twinCollection_toJson, false) != 0)
     {
         LogError("Failed to set '%s' in JSON string representation", INITIAL_TWIN_JSON_KEY_TAGS);
         json_value_free(root_value);
         root_value = NULL;
     }
-    else if (json_serialize_and_set_struct(root_object, INITIAL_TWIN_JSON_KEY_PROPERTIES, twin->properties, (TO_JSON_FUNCTION)twinProperties_toJson, OPTIONAL) != 0)
+    else if (json_serialize_and_set_struct(root_object, INITIAL_TWIN_JSON_KEY_PROPERTIES, twin->properties, (TO_JSON_FUNCTION)twinProperties_toJson, false) != 0)
     {
         LogError("Failed to set '%s' in JSON string representation", INITIAL_TWIN_JSON_KEY_PROPERTIES);
         json_value_free(root_value);
@@ -256,13 +256,13 @@ INITIAL_TWIN_HANDLE initialTwin_fromJson(JSON_Object* root_object)
     {
         memset(new_initialTwin, 0, sizeof(INITIAL_TWIN));
 
-        if (json_deserialize_and_get_struct((void**)&(new_initialTwin->tags), root_object, INITIAL_TWIN_JSON_KEY_TAGS, (FROM_JSON_FUNCTION)twinCollection_fromJson, OPTIONAL) != 0)
+        if (json_deserialize_and_get_struct((void**)&(new_initialTwin->tags), root_object, INITIAL_TWIN_JSON_KEY_TAGS, (FROM_JSON_FUNCTION)twinCollection_fromJson, false) != 0)
         {
             LogError("Failed to set '%s' in Twin State", INITIAL_TWIN_JSON_KEY_TAGS);
             initialTwin_destroy(new_initialTwin);
             new_initialTwin = NULL;
         }
-        else if (json_deserialize_and_get_struct((void**)&(new_initialTwin->properties), root_object, INITIAL_TWIN_JSON_KEY_PROPERTIES, (FROM_JSON_FUNCTION)twinProperties_fromJson, OPTIONAL) != 0)
+        else if (json_deserialize_and_get_struct((void**)&(new_initialTwin->properties), root_object, INITIAL_TWIN_JSON_KEY_PROPERTIES, (FROM_JSON_FUNCTION)twinProperties_fromJson, false) != 0)
         {
             LogError("Failed to set '%s' in Twin State", INITIAL_TWIN_JSON_KEY_PROPERTIES);
             initialTwin_destroy(new_initialTwin);
@@ -345,14 +345,14 @@ int initialTwin_setTags(INITIAL_TWIN_HANDLE twin, const char* tags)
     if (twin == NULL)
     {
         LogError("TwinState is NULL");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else if ((tags != NULL) && (twin->tags == NULL))
     {
         if ((twin->tags = twinCollection_create(tags)) == NULL)
         {
             LogError("Failure creating Twin Collection for tags");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
     }
     else if (tags == NULL)
@@ -365,7 +365,7 @@ int initialTwin_setTags(INITIAL_TWIN_HANDLE twin, const char* tags)
         if (mallocAndStrcpy_overwrite(&(twin->tags->json), tags) != 0)
         {
             LogError("Failure setting tags");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
     }
 
@@ -403,14 +403,14 @@ int initialTwin_setDesiredProperties(INITIAL_TWIN_HANDLE twin, const char* desir
     if (twin == NULL)
     {
         LogError("TwinState is NULL");
-        result = __FAILURE__;
+        result = MU_FAILURE;
     }
     else if ((desired_properties != NULL) && (twin->properties == NULL))
     {
         if ((twin->properties = twinProperties_create(desired_properties)) == NULL)
         {
             LogError("Failure creating Twin Properties");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
     }
     else if ((desired_properties != NULL) && (twin->properties->desired == NULL))
@@ -418,7 +418,7 @@ int initialTwin_setDesiredProperties(INITIAL_TWIN_HANDLE twin, const char* desir
         if ((twin->properties->desired = twinCollection_create(desired_properties)) == NULL)
         {
             LogError("Failure creating Twin Collection for desired properties");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
     }
     else if (desired_properties == NULL)
@@ -432,7 +432,7 @@ int initialTwin_setDesiredProperties(INITIAL_TWIN_HANDLE twin, const char* desir
         if (mallocAndStrcpy_overwrite(&(twin->properties->desired->json), desired_properties) != 0)
         {
             LogError("Failure setting desired properties");
-            result = __FAILURE__;
+            result = MU_FAILURE;
         }
     }
 

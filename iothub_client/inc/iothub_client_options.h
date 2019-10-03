@@ -18,6 +18,8 @@ extern "C"
         const char* password;
     } IOTHUB_PROXY_OPTIONS;
 
+    static STATIC_VAR_UNUSED const char* OPTION_RETRY_INTERVAL_SEC = "retry_interval_sec";
+
     static STATIC_VAR_UNUSED const char* OPTION_LOG_TRACE = "logtrace";
     static STATIC_VAR_UNUSED const char* OPTION_X509_CERT = "x509certificate";
     static STATIC_VAR_UNUSED const char* OPTION_X509_PRIVATE_KEY = "x509privatekey";
@@ -75,6 +77,8 @@ extern "C"
 
     //diagnostic sampling percentage value, [0-100]
     static STATIC_VAR_UNUSED const char* OPTION_DIAGNOSTIC_SAMPLING_PERCENTAGE = "diag_sampling_percentage";
+
+    static STATIC_VAR_UNUSED const char* OPTION_DO_WORK_FREQUENCY_IN_MS = "do_work_freq_ms";
 
 #ifdef __cplusplus
 }

@@ -63,6 +63,7 @@ azure_uamqp_c
 	extern int twin_messenger_report_state_async(TWIN_TWIN_MESSENGER_HANDLE twin_msgr_handle, CONSTBUFFER_HANDLE data, ON_TWIN_MESSENGER_REPORT_STATE_COMPLETE_CALLBACK on_report_state_complete_callback, const void* context);
 	extern int twin_messenger_subscribe(TWIN_MESSENGER_HANDLE twin_msgr_handle, ON_TWIN_STATE_UPDATE_CALLBACK on_twin_state_update_callback, void* context);
 	extern int twin_messenger_unsubscribe(TWIN_MESSENGER_HANDLE twin_msgr_handle);
+	extern int twin_messenger_get_twin_async(TWIN_MESSENGER_HANDLE twin_msgr_handle, TWIN_STATE_UPDATE_CALLBACK on_get_twin_completed_callback, void* context);
 	extern int twin_messenger_get_send_status(TWIN_MESSENGER_HANDLE twin_msgr_handle, TWIN_MESSENGER_SEND_STATUS* send_status);
 	extern int twin_messenger_start(TWIN_MESSENGER_HANDLE twin_msgr_handle, SESSION_HANDLE session_handle); 
 	extern int twin_messenger_stop(TWIN_MESSENGER_HANDLE twin_msgr_handle);
@@ -133,9 +134,7 @@ int twin_messenger_report_state_async(TWIN_TWIN_MESSENGER_HANDLE twin_msgr_handl
 
 **SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_024: [**If malloc() fails, twin_messenger_report_state_async() shall fail and return a non-zero value**]**    
 
-**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_025: [**`twin_op_ctx` shall have a copy of `data`**]**  
-
-**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_026: [**If `data` fails to be copied, twin_messenger_report_state_async() shall fail and return a non-zero value**]**    
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_025: [**`twin_op_ctx` shall increment the reference count for `data` and store it.**]**  
 
 **SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_027: [**`twin_op_ctx->time_enqueued` shall be set using get_time**]**    
 
@@ -195,6 +194,25 @@ int twin_messenger_unsubscribe(TWIN_MESSENGER_HANDLE twin_msgr_handle);
 **SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_044: [**If no failures occurr, twin_messenger_unsubscribe() shall return zero**]**  
 
 
+### twin_messenger_get_twin_async
+
+```c
+int twin_messenger_get_twin_async(TWIN_MESSENGER_HANDLE twin_msgr_handle, TWIN_STATE_UPDATE_CALLBACK on_get_twin_completed_callback, void* context);
+```
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_109: [**If `twin_msgr_handle` or `on_twin_state_update_callback` are NULL, twin_messenger_get_twin_async() shall fail and return a non-zero value**]**  
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_110: [** `on_get_twin_completed_callback` and `context` shall be saved **]** 
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_111: [** An AMQP message shall be created to request a GET twin **]**
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_112: [** The AMQP message shall be sent to the twin send link **]** 
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_113: [**If any failures occurr, twin_messenger_get_twin_async() shall return a non-zero value **]**  
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_114: [**If no failures occurr, twin_messenger_get_twin_async() shall return 0 **]**  
+
+
 ### twin_messenger_start
 
 ```c
@@ -229,6 +247,8 @@ int twin_messenger_stop(TWIN_MESSENGER_HANDLE twin_msgr_handle);
 **SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_054: [**`twin_msgr->state` shall be set to TWIN_MESSENGER_STATE_STOPPING, and `twin_msgr->on_state_changed_callback` invoked if provided**]**  
 
 **SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_055: [**If any failures occurr, `twin_msgr->state` shall be set to TWIN_MESSENGER_STATE_ERROR, and `twin_msgr->on_state_changed_callback` invoked if provided**]**
+
+**SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_115: [**If the client was subscribed for Twin updates, it must reset itself to continue receiving when twin_messenger_start is invoked **]**
 
 **SRS_IOTHUBTRANSPORT_AMQP_TWIN_MESSENGER_09_056: [**If no failures occurr, twin_messenger_stop() shall return 0**]**
 

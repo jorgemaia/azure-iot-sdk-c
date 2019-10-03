@@ -9,7 +9,7 @@
 #include "multitree.h"
 #include "azure_c_shared_utility/optimize_size.h"
 #include "azure_c_shared_utility/crt_abstractions.h"
-#include "azure_c_shared_utility/macro_utils.h"
+#include "azure_macro_utils/macro_utils.h"
 #include "azure_c_shared_utility/lock.h"
 
 #ifndef SIZE_MAX
@@ -265,11 +265,11 @@ public:
 
     MOCK_STATIC_METHOD_2(, int, STRING_concat, STRING_HANDLE, s1, const char*, s2)
         currentSTRING_concat_call++;
-    MOCK_METHOD_END(int, (((whenShallSTRING_concat_fail>0) && (currentSTRING_concat_call == whenShallSTRING_concat_fail)) ? __FAILURE__ : BASEIMPLEMENTATION::STRING_concat(s1, s2)));
+    MOCK_METHOD_END(int, (((whenShallSTRING_concat_fail>0) && (currentSTRING_concat_call == whenShallSTRING_concat_fail)) ? MU_FAILURE : BASEIMPLEMENTATION::STRING_concat(s1, s2)));
 
     MOCK_STATIC_METHOD_2(, int, STRING_concat_with_STRING, STRING_HANDLE, s1, STRING_HANDLE, s2)
         currentSTRING_concat_with_STRING_call++;
-    MOCK_METHOD_END(int, (((currentSTRING_concat_with_STRING_call>0) && (currentSTRING_concat_with_STRING_call == whenShallSTRING_concat_with_STRING_fail)) ? __FAILURE__ : BASEIMPLEMENTATION::STRING_concat_with_STRING(s1, s2)));
+    MOCK_METHOD_END(int, (((currentSTRING_concat_with_STRING_call>0) && (currentSTRING_concat_with_STRING_call == whenShallSTRING_concat_with_STRING_fail)) ? MU_FAILURE : BASEIMPLEMENTATION::STRING_concat_with_STRING(s1, s2)));
 
 
     MOCK_STATIC_METHOD_1(, int, STRING_empty, STRING_HANDLE, s)
@@ -333,8 +333,7 @@ TEST_FUNCTION_INITIALIZE(init)
     whenShallSTRING_empty_fail = 0;
 
     currentSTRING_concat_with_STRING_call = 0;
-    whenShallSTRING_concat_with_STRING_fail = 0; 
-
+    whenShallSTRING_concat_with_STRING_fail = 0;
 }
 
 TEST_FUNCTION_CLEANUP(clean)
@@ -994,7 +993,7 @@ TEST_FUNCTION(MultiTree_AddLeaf_with_alternate_names_succeeds)
     auto res5 = MultiTree_AddLeaf(treeHandle, CHILD312PATH_ALTERNATE, (void*)CHILD312VALUE);
     auto res6 = MultiTree_AddLeaf(treeHandle, CHILD313PATH_ALTERNATE, (void*)CHILD313VALUE);
     auto res7 = MultiTree_AddLeaf(treeHandle, CHILD314PATH_ALTERNATE, (void*)CHILD313VALUE);
-    
+
     ///assert
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, res1);
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, res2);
@@ -1003,7 +1002,7 @@ TEST_FUNCTION(MultiTree_AddLeaf_with_alternate_names_succeeds)
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, res5);
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, res6);
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, res7);
-    
+
     //cleanup
     MultiTree_Destroy(treeHandle);
     mocks.ResetAllCalls();
@@ -1541,7 +1540,7 @@ TEST_FUNCTION(MultiTree_Destroy_with_one_child_tree_calls_free_5_times)
     - children in root
     - root itself*/
     ///arrange
-    CMultiTreeMocks mocks; 
+    CMultiTreeMocks mocks;
 
     MULTITREE_HANDLE treeHandle = MultiTree_Create(StringClone, StringFree);
     (void)MultiTree_AddLeaf(treeHandle, "child", (void*)"value");
@@ -2332,7 +2331,7 @@ void VerifyMultiTreeExpectedAfterDeleteChild(MULTITREE_HANDLE treeHandle, const 
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, result);
 
     ASSERT_ARE_EQUAL(int, 0, strcmp(firstChildName, STRING_c_str(global_bufferTemp)));
-    
+
     // Verify the 1st element of the tree matches secondChildName
     result = MultiTree_GetChild(treeHandle, 1, &childHandle);
     ASSERT_ARE_EQUAL(MULTITREE_RESULT, MULTITREE_OK, result);
